@@ -1,0 +1,29 @@
+{
+  "name": "resume-builder",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "concurrently \"node server.js\" \"npm run dev --prefix client\"",
+    "start": "node server.js",
+    "install:all": "npm install && npm install --prefix client"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.17",
+    "axios": "^1.7.9",
+    "better-sqlite3": "^11.7.0",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^7.0.0",
+    "docx": "^9.0.2",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mammoth": "^1.8.0",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "playwright": "^1.49.1",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

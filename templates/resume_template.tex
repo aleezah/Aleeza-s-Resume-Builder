@@ -1,0 +1,71 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.42in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+% Set font to Helvetica/Arial-like for clean, modern corporate reading
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Formatting configurations
+\definecolor{darkblue}{RGB}{0, 51, 102}
+\urlstyle{same}
+
+\titleformat{\section}{\large\bfseries\color{darkblue}}{}{0em}{}[\titrule]
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+
+\setlist[itemize]{leftmargin=12pt, noitemsep, topsep=1pt, bottomsep=2pt}
+
+\pagestyle{empty} % Removes page numbers from the document
+
+\begin{document}
+
+% --- HEADER ---
+\begin{center}
+    {\LARGE \textbf{\color{darkblue}[FULL NAME]}} \\ \vspace{3pt}
+    [PHONE NUMBER] \ $\cdot$ \ \href{mailto:[EMAIL]}{[EMAIL]} \ $\cdot$ \ \href{https://[LINKEDIN URL]}{[LINKEDIN SHORT URL]} \ $\cdot$ \ \href{https://[GITHUB URL]}{[GITHUB SHORT URL]}
+\end{center}
+
+% --- EDUCATION ---
+\section{Education}
+\textbf{[UNIVERSITY NAME]} \hfill [CITY, STATE/PROVINCE] \\
+[DEGREE TYPE (e.g., Bachelor of Engineering (B.Eng.)) in FIELD]
+
+% --- SUMMARY OF SKILLS ---
+\section{Summary of Skills}
+\begin{itemize}
+    \item \textbf{[Skill Category 1]:} [Skill A, Skill B, Skill C]
+    \item \textbf{[Skill Category 2]:} [Skill A, Skill B, Skill C]
+    \item \textbf{[Skill Category 3]:} [Skill A, Skill B, Skill C]
+    \item \textbf{[Skill Category 4]:} [Skill A, Skill B, Skill C]
+    \item \textbf{[Skill Category 5]:} [Skill A, Skill B, Skill C]
+\end{itemize}
+
+% --- PROFESSIONAL EXPERIENCE ---
+\section{Professional Experience}
+
+\textbf{[COMPANY 1]} \hfill [CITY, STATE/PROVINCE] \\
+{\small\textbf{[JOB TITLE 1]}} \hfill [START DATE] -- [END DATE/PRESENT]
+\begin{itemize}
+    \item [Action-oriented accomplishment statement incorporating target job keywords]
+    \item [Action-oriented accomplishment statement incorporating target job keywords]
+    \item [Action-oriented accomplishment statement incorporating target job keywords]
+\end{itemize}
+
+\textbf{[COMPANY 2]} \hfill [CITY, STATE/PROVINCE] \\
+{\small\textbf{[JOB TITLE 2]}} \hfill [START DATE] -- [END DATE]
+\begin{itemize}
+    \item [Action-oriented accomplishment statement incorporating target job keywords]
+    \item [Action-oriented accomplishment statement incorporating target job keywords]
+\end{itemize}
+
+{\small\textbf{[NESTED JOB TITLE 3 IF APPLICABLE]}} \hfill [START DATE] -- [END DATE]
+\begin{itemize}
+    \item [Action-oriented accomplishment statement incorporating target job keywords]
+    \item [Action-oriented accomplishment statement incorporating target job keywords]
+\end{itemize}
+
+\end{document}

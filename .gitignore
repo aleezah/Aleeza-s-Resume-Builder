@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+client/node_modules/
+
+# Database (contains personal data)
+*.db
+*.db-shm
+*.db-wal
+data.db
+
+# Uploaded documents & generated outputs (personal files)
+uploads/
+outputs/
+
+# Build output
+client/dist/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
