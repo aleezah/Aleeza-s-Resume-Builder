@@ -96,7 +96,7 @@ echo ""
 
 # ── Step 4: Convert icon to .icns format ─────────────────────────────────────
 
-ICNS_PATH="$SCRIPT_DIR/icon.icns"
+ICNS_PATH="$SCRIPT_DIR/Job Application Tool.icns"
 ICO_PATH="$SCRIPT_DIR/Job Application Tool.ico"
 
 if [ ! -f "$ICNS_PATH" ] && [ -f "$ICO_PATH" ]; then
