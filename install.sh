@@ -13,56 +13,61 @@ echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# ── Step 1: Ensure Node.js is available ──────────────────────────────────────
+# ── Step 1: Ensure Homebrew is available ─────────────────────────────────────
 
-# Bring Homebrew and nvm into PATH in case they exist but aren't in current shell
-export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:$PATH"
-[ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
+# Activate Homebrew if it exists but isn't in PATH yet
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -f "/usr/local/bin/brew" ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
 
-if ! command -v node &> /dev/null; then
-    echo "[!] Node.js is not installed. Installing now..."
+if ! command -v brew &> /dev/null; then
+    echo "[!] Homebrew is not installed. Installing now..."
+    echo "    You may be asked for your Mac password — this is normal."
     echo ""
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-    # Try Homebrew first
-    if ! command -v brew &> /dev/null; then
-        echo "    Installing Homebrew (this takes a few minutes)..."
-        echo "    You may be asked for your Mac password — this is normal."
-        echo ""
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-        # Add Homebrew to PATH for this session (Apple Silicon vs Intel)
-        if [ -f "/opt/homebrew/bin/brew" ]; then
-            export PATH="/opt/homebrew/bin:$PATH"
-            eval "$(/opt/homebrew/bin/brew shellenv)"
-        elif [ -f "/usr/local/bin/brew" ]; then
-            export PATH="/usr/local/bin:$PATH"
-            eval "$(/usr/local/bin/brew shellenv)"
-        fi
-    fi
-
-    if command -v brew &> /dev/null; then
-        echo "    Installing Node.js LTS (v22) via Homebrew..."
-        brew install node@22
-        brew link node@22 --force --overwrite
-        export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
-    else
-        echo ""
-        echo "[ERROR] Could not install Homebrew automatically."
-        echo ""
-        echo "  Please install Node.js manually:"
-        echo "  1. Go to: https://nodejs.org"
-        echo "  2. Download and run the macOS installer"
-        echo "  3. Re-run this script when done"
-        echo ""
-        open "https://nodejs.org/en/download"
-        read -p "Press Enter after Node.js is installed to continue..."
+    # Activate after install
+    if [ -f "/opt/homebrew/bin/brew" ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -f "/usr/local/bin/brew" ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
     fi
 fi
+
+if ! command -v brew &> /dev/null; then
+    echo ""
+    echo "[ERROR] Could not install Homebrew. Please install it manually:"
+    echo "  https://brew.sh"
+    exit 1
+fi
+
+echo "[OK] Homebrew found."
+echo ""
+
+# ── Step 2: Ensure Node.js LTS (v22) is installed ────────────────────────────
+
+# Check if node@22 is already installed via brew
+if ! brew list node@22 &> /dev/null; then
+    echo "[!] Installing Node.js LTS (v22)..."
+    echo "    This may take a few minutes. Please wait."
+    echo ""
+    brew install node@22
+fi
+
+# Unlink any other node version and link node@22
+brew unlink node 2>/dev/null || true
+brew link node@22 --force --overwrite
+
+# Add node@22 to PATH for this session
+export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 # Final check
 if ! command -v node &> /dev/null; then
     echo ""
-    echo "[ERROR] Node.js still not found. Please restart Terminal and run this script again."
+    echo "[ERROR] Node.js still not found after install."
+    echo "  Try closing this Terminal window and running the script again."
     exit 1
 fi
 
@@ -70,72 +75,89 @@ NODE_VER=$(node -v)
 echo "[OK] Node.js $NODE_VER found."
 echo ""
 
-# ── Step 2: Install npm dependencies ─────────────────────────────────────────
+# ── Step 3: Install app dependencies ─────────────────────────────────────────
 
-echo "[1/2] Installing dependencies (this may take a minute)..."
+echo "[1/2] Installing app components (this may take a minute)..."
 cd "$SCRIPT_DIR"
 npm install
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "[ERROR] Installation failed. See the error above."
+    exit 1
+fi
 npm install --prefix client
-echo "[OK] Dependencies installed."
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "[ERROR] Installation failed. See the error above."
+    exit 1
+fi
+echo "[OK] App components installed."
 echo ""
 
-# ── Step 3: Create .app launcher in /Applications ────────────────────────────
+# ── Step 4: Convert icon to .icns format ─────────────────────────────────────
 
-echo "[2/2] Creating app launcher in /Applications..."
+ICNS_PATH="$SCRIPT_DIR/icon.icns"
+ICO_PATH="$SCRIPT_DIR/Job Application Tool.ico"
 
-APP_DIR="/Applications/Job Application Tool.app"
-CONTENTS="$APP_DIR/Contents"
-MACOS="$CONTENTS/MacOS"
-RESOURCES="$CONTENTS/Resources"
+if [ ! -f "$ICNS_PATH" ] && [ -f "$ICO_PATH" ]; then
+    echo "    Converting icon to Mac format..."
+    ICONSET=$(mktemp -d /tmp/icon.iconset.XXXX)
+    # sips can read .ico and convert to png
+    sips -s format png "$ICO_PATH" --out /tmp/icon_src.png &>/dev/null
+    for size in 16 32 64 128 256 512; do
+        sips -z $size $size /tmp/icon_src.png --out "$ICONSET/icon_${size}x${size}.png" &>/dev/null
+    done
+    iconutil -c icns "$ICONSET" -o "$ICNS_PATH" 2>/dev/null || true
+    rm -rf "$ICONSET" /tmp/icon_src.png
+fi
 
-mkdir -p "$MACOS" "$RESOURCES"
+# ── Step 5: Create .app launcher using AppleScript ───────────────────────────
 
-cat > "$CONTENTS/Info.plist" << PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>launch</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.aleezah.jobapplicationtool</string>
-    <key>CFBundleName</key>
-    <string>Job Application Tool</string>
-    <key>CFBundleDisplayName</key>
-    <string>Job Application Tool</string>
-    <key>CFBundleVersion</key>
-    <string>1.0</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.13</string>
-</dict>
-</plist>
-PLIST
+echo "[2/2] Creating app launcher..."
 
-# Build the node path so the .app can find node even without a full shell
-NODE_PATH=$(command -v node || echo "/opt/homebrew/bin/node")
-NODE_DIR=$(dirname "$NODE_PATH")
+APP_PATH="/Applications/Job Application Tool.app"
 
-cat > "$MACOS/launch" << LAUNCHER
-#!/bin/bash
-export PATH="$NODE_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-cd "$SCRIPT_DIR"
-npm run dev &
-SERVER_PID=\$!
-sleep 4
-open http://localhost:5173
-wait \$SERVER_PID
-LAUNCHER
+# Remove old version if it exists
+rm -rf "$APP_PATH" 2>/dev/null || true
 
-chmod +x "$MACOS/launch"
-echo "[OK] App created in /Applications."
+# Build AppleScript app — macOS handles these natively without security warnings
+osacompile -o "$APP_PATH" << APPLESCRIPT
+on run
+    set appDir to "$SCRIPT_DIR"
+    set nodePath to "/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    tell application "Terminal"
+        activate
+        do script "export PATH=\"" & nodePath & "\"; cd " & quoted form of appDir & " && npm run dev"
+    end tell
+    delay 5
+    open location "http://localhost:5173"
+end run
+APPLESCRIPT
+
+# Apply icon if we have one
+if [ -f "$ICNS_PATH" ]; then
+    cp "$ICNS_PATH" "$APP_PATH/Contents/Resources/applet.icns"
+fi
+
+# Remove quarantine flag so macOS doesn't block it
+xattr -cr "$APP_PATH" 2>/dev/null || true
+
+# Also create a Desktop alias for easy access
+ALIAS_PATH="$HOME/Desktop/Job Application Tool"
+rm -f "$ALIAS_PATH" 2>/dev/null || true
+osascript -e "tell application \"Finder\" to make alias file to POSIX file \"$APP_PATH\" at POSIX file \"$HOME/Desktop\""
+
+echo "[OK] App created — you can open it from:"
+echo "     • Applications folder"
+echo "     • Spotlight (Cmd+Space → Job Application Tool)"
+echo "     • Your Desktop"
 echo ""
 
 echo "================================================"
 echo "  Setup complete!"
 echo ""
-echo "  Open 'Job Application Tool' from your"
-echo "  Applications folder or Spotlight (Cmd+Space)."
+echo "  Double-click 'Job Application Tool' on your"
+echo "  Desktop or in Applications to launch anytime."
+echo "  Your browser will open automatically."
 echo "================================================"
 echo ""
