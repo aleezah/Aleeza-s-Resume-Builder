@@ -27,6 +27,7 @@ export const updateExperience   = (id, data)   => api.put(`/experiences/${id}`, 
 export const deleteExperience   = (id)         => api.delete(`/experiences/${id}`)
 export const confirmMerge       = (data)       => api.post('/experiences/merge', data)
 export const findDuplicates     = (profile_id) => api.get('/experiences/find-duplicates', { params: { profile_id } }).then(r => r.data)
+export const polishExperience   = (id)         => api.post(`/experiences/${id}/polish`).then(r => r.data)
 export const importExtracted    = (data)       => api.post('/experiences/import', data).then(r => r.data)
 
 export const listEducation      = (profile_id) => api.get('/experiences/education', { params: { profile_id } }).then(r => r.data)
@@ -64,8 +65,11 @@ export const listGenerations = (profile_id)=> api.get('/generate', { params: { p
 export const deleteGeneration = (id)       => api.delete(`/generate/${id}`)
 
 // ── Integrations ──────────────────────────────────────────────────────────────
-export const connectGitHub  = (data)      => api.post('/integrations/github', data).then(r => r.data)
-export const connectGitLab  = (data)      => api.post('/integrations/gitlab', data).then(r => r.data)
+export const connectGitHub      = (data) => api.post('/integrations/github', data).then(r => r.data)
+export const getGitHubStatus    = ()     => api.get('/integrations/github/status').then(r => r.data)
+export const syncGitHub         = (profile_id) => api.post('/integrations/github/sync', { profile_id }).then(r => r.data)
+export const enrichGitHubProject= (id)   => api.post(`/integrations/github/enrich/${id}`).then(r => r.data)
+export const connectGitLab      = (data) => api.post('/integrations/gitlab', data).then(r => r.data)
 export const importLinkedIn = (formData)  => api.post('/integrations/linkedin', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data)
 
 // ── Settings ──────────────────────────────────────────────────────────────────

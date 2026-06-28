@@ -1,6 +1,6 @@
 ; Inno Setup script — compile with Inno Setup 6+ (https://jrsoftware.org/isinfo.php)
 
-#define AppName "Resume Builder"
+#define AppName "Job Application Tool"
 #define AppVersion "1.0"
 #define AppPublisher "Aleeza Hashmi"
 #define AppURL "https://github.com/aleezah/Aleeza-s-Resume-Builder"
@@ -45,7 +45,7 @@ Filename: "cmd.exe"; Parameters: "/C npm run install:all"; WorkingDir: "{app}"; 
   Flags: runhidden waituntilterminated
 
 ; Open the app after install
-Filename: "{app}\start.bat"; Description: "Launch Resume Builder now"; \
+Filename: "{app}\start.bat"; Description: "Launch Job Application Tool now"; \
   Flags: nowait postinstall skipifsilent
 
 [Code]

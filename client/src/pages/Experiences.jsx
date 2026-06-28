@@ -155,6 +155,8 @@ function ExperienceSection({ profileId }) {
   const [scanPairs, setScanPairs]   = useState(null)
   const [scanning, setScanning]     = useState(false)
   const [scanMsg, setScanMsg]       = useState(null)
+  const [polishing, setPolishing]   = useState(null) // id being polished
+  const [polishPreview, setPolishPreview] = useState(null) // { id, bullets }
 
   const load = () => api.listExperiences(profileId).then(items => setItems(sortExperiences(items)))
   useEffect(() => { if (profileId) load() }, [profileId])
@@ -191,6 +193,26 @@ function ExperienceSection({ profileId }) {
     load()
   }
 
+  async function handlePolish(item) {
+    setPolishing(item.id)
+    try {
+      const { original, bullets } = await api.polishExperience(item.id)
+      setPolishPreview({ id: item.id, original, bullets })
+    } catch (e) {
+      alert(e.response?.data?.error || e.message)
+    }
+    setPolishing(null)
+  }
+
+  async function applyPolish() {
+    if (!polishPreview) return
+    const item = items.find(i => i.id === polishPreview.id)
+    const cleaned = polishPreview.bullets.map(b => `• ${b}`).join('\n')
+    await api.updateExperience(polishPreview.id, { ...item, achievements: cleaned, description: '' })
+    setPolishPreview(null)
+    load()
+  }
+
   const isFormOpen = adding || editing !== null
 
   return (
@@ -198,6 +220,69 @@ function ExperienceSection({ profileId }) {
       {scanPairs && (
         <DuplicateScanModal pairs={scanPairs} onDone={() => { setScanPairs(null); load() }} />
       )}
+
+      {/* Polish preview modal */}
+      {polishPreview && (() => {
+        const beforeSet = new Set(polishPreview.original.map(b => b.toLowerCase().trim()))
+        const afterSet  = new Set(polishPreview.bullets.map(b => b.toLowerCase().trim()))
+        return (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
+            <div className="bg-gray-900 rounded-xl border border-brand-700 w-full max-w-5xl max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-5 border-b border-gray-800">
+                <div>
+                  <h2 className="font-bold text-white text-lg">✨ Before & After</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {polishPreview.original.length} bullets → {polishPreview.bullets.length} bullets · duplicates removed, wording improved, no new facts added
+                  </p>
+                </div>
+                <div className="flex gap-3 text-xs text-gray-500">
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-800 inline-block"/>Removed</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-800 inline-block"/>New / improved</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 divide-x divide-gray-800 overflow-y-auto flex-1">
+                {/* Before */}
+                <div className="p-5">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Before ({polishPreview.original.length})</p>
+                  <div className="space-y-2">
+                    {polishPreview.original.map((b, i) => {
+                      const kept = afterSet.has(b.toLowerCase().trim())
+                      return (
+                        <div key={i} className={`flex items-start gap-2 text-sm rounded px-2 py-1 ${kept ? 'text-gray-400' : 'text-red-400 bg-red-900/20 line-through decoration-red-700'}`}>
+                          <span className="mt-0.5 shrink-0">•</span>
+                          <span>{b}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* After */}
+                <div className="p-5">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">After ({polishPreview.bullets.length})</p>
+                  <div className="space-y-2">
+                    {polishPreview.bullets.map((b, i) => {
+                      const isNew = !beforeSet.has(b.toLowerCase().trim())
+                      return (
+                        <div key={i} className={`flex items-start gap-2 text-sm rounded px-2 py-1 ${isNew ? 'text-green-300 bg-green-900/20' : 'text-gray-300'}`}>
+                          <span className="mt-0.5 shrink-0 text-brand-400">•</span>
+                          <span>{b}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-5 border-t border-gray-800">
+                <button onClick={() => setPolishPreview(null)} className="btn-secondary">Discard</button>
+                <button onClick={applyPolish} className="btn-primary">✓ Apply & Save</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
       <div className="flex items-center justify-between mb-3">
         <p className="section-heading mb-0">Work Experience</p>
         <div className="flex gap-2">
@@ -267,6 +352,10 @@ function ExperienceSection({ profileId }) {
                 )}
               </div>
               <div className="flex gap-1 shrink-0">
+                <button onClick={() => handlePolish(item)} disabled={polishing === item.id}
+                  className="btn-sm btn-secondary" title="Remove duplicates and improve wording with AI">
+                  {polishing === item.id ? '…' : '✨ Clean up'}
+                </button>
                 <button onClick={() => startEdit(item)} className="btn-sm btn-secondary">Edit</button>
                 <button onClick={() => handleDelete(item.id)} className="btn-sm btn-danger">✕</button>
               </div>
@@ -395,9 +484,17 @@ function ProjectsSection({ profileId }) {
   const [items, setItems] = useState([])
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({})
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState(null)
+  const [enriching, setEnriching] = useState(null)
+  const [enrichPreview, setEnrichPreview] = useState(null) // { id, bullets, languages }
+  const [ghConnected, setGhConnected] = useState(null) // null=unknown, true/false
 
   const load = () => api.listProjects(profileId).then(setItems)
   useEffect(() => { if (profileId) load() }, [profileId])
+  useEffect(() => {
+    api.getGitHubStatus().then(r => setGhConnected(r.connected)).catch(() => setGhConnected(false))
+  }, [])
 
   function handleChange(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
 
@@ -406,12 +503,84 @@ function ProjectsSection({ profileId }) {
     setAdding(false); setForm({}); load()
   }
 
+  async function handleSync() {
+    setSyncing(true); setSyncMsg(null)
+    try {
+      const r = await api.syncGitHub(profileId)
+      setSyncMsg(`✓ Synced — ${r.repos_imported} new projects imported`)
+      load()
+    } catch (e) {
+      setSyncMsg(`Error: ${e.response?.data?.error || e.message}`)
+    }
+    setSyncing(false)
+  }
+
+  async function handleEnrich(item) {
+    setEnriching(item.id)
+    try {
+      const r = await api.enrichGitHubProject(item.id)
+      setEnrichPreview({ id: item.id, name: item.name, bullets: r.bullets, languages: r.languages })
+    } catch (e) {
+      alert(e.response?.data?.error || e.message)
+    }
+    setEnriching(null)
+  }
+
+  async function applyEnrich() {
+    if (!enrichPreview) return
+    const item = items.find(i => i.id === enrichPreview.id)
+    await api.updateProject(enrichPreview.id, {
+      ...item,
+      description: enrichPreview.bullets.map(b => `• ${b}`).join('\n'),
+      tech_stack: enrichPreview.languages.join(', ') || item.tech_stack
+    })
+    setEnrichPreview(null)
+    load()
+  }
+
   return (
     <section className="mb-8">
+      {/* Enrich preview modal */}
+      {enrichPreview && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
+          <div className="bg-gray-900 rounded-xl border border-brand-700 w-full max-w-xl max-h-[90vh] flex flex-col">
+            <div className="p-5 border-b border-gray-800">
+              <h2 className="font-bold text-white text-lg">✨ Generated Bullets</h2>
+              <p className="text-xs text-gray-500 mt-0.5">{enrichPreview.name} · based on commits, languages, and README</p>
+              {enrichPreview.languages.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {enrichPreview.languages.map(l => <span key={l} className="tag text-xs">{l}</span>)}
+                </div>
+              )}
+            </div>
+            <div className="overflow-y-auto flex-1 p-5 space-y-2">
+              {enrichPreview.bullets.map((b, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                  <span className="text-brand-400 mt-0.5 shrink-0">•</span>
+                  <span>{b}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between p-5 border-t border-gray-800">
+              <button onClick={() => setEnrichPreview(null)} className="btn-secondary">Discard</button>
+              <button onClick={applyEnrich} className="btn-primary">✓ Apply & Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <p className="section-heading mb-0">Projects</p>
-        <button onClick={() => setAdding(a => !a)} className="btn-sm btn-primary">+ Add</button>
+        <div className="flex items-center gap-2">
+          {ghConnected === true && <span className="text-xs text-green-400">● GitHub connected</span>}
+          {ghConnected === false && <Link to="/profile" className="text-xs text-yellow-400 hover:underline">⚠ Connect GitHub →</Link>}
+          <button onClick={handleSync} disabled={syncing || !ghConnected} className="btn-sm btn-secondary" title="Re-sync repos from GitHub">
+            {syncing ? '…' : '⟳ Sync GitHub'}
+          </button>
+          <button onClick={() => setAdding(a => !a)} className="btn-sm btn-primary">+ Add</button>
+        </div>
       </div>
+      {syncMsg && <p className={`text-xs mb-3 ${syncMsg.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{syncMsg}</p>}
 
       {adding && (
         <div className="card mb-4 border-brand-700">
@@ -434,16 +603,24 @@ function ProjectsSection({ profileId }) {
       <div className="space-y-2">
         {items.map(item => (
           <div key={item.id} className="card flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-white">{item.name}</span>
-                {item.url && <a href={item.url} target="_blank" rel="noreferrer" className="text-brand-400 text-xs hover:underline">↗ {item.source}</a>}
+                {item.url && <a href={item.url} target="_blank" rel="noreferrer" className="text-brand-400 text-xs hover:underline">↗ view</a>}
                 <span className="badge bg-gray-800 text-gray-500">{item.source}</span>
               </div>
-              {item.description && <p className="text-sm text-gray-400 mt-1">{item.description}</p>}
               {item.tech_stack && <p className="text-xs text-gray-600 mt-1">{item.tech_stack}</p>}
+              {item.description && <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">{item.description}</p>}
             </div>
-            <button onClick={() => api.deleteProject(item.id).then(load)} className="btn-sm btn-danger shrink-0">✕</button>
+            <div className="flex gap-1 shrink-0">
+              {item.source === 'github' && (
+                <button onClick={() => handleEnrich(item)} disabled={enriching === item.id}
+                  className="btn-sm btn-secondary" title="Generate bullet points from commits, languages, and README">
+                  {enriching === item.id ? '…' : '✨ Generate'}
+                </button>
+              )}
+              <button onClick={() => api.deleteProject(item.id).then(load)} className="btn-sm btn-danger">✕</button>
+            </div>
           </div>
         ))}
       </div>

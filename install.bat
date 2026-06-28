@@ -1,10 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
-title Resume Builder — Setup
+title Job Application Tool — Setup
 color 0A
 
 echo ================================================
-echo   Resume Builder — First-Time Setup
+echo   Job Application Tool — First-Time Setup
 echo ================================================
 echo.
 
@@ -42,13 +42,14 @@ echo.
 :: Create desktop shortcut
 echo [2/2] Creating desktop shortcut...
 set SCRIPT_DIR=%~dp0
-set SHORTCUT=%USERPROFILE%\Desktop\Resume Builder.lnk
+set SHORTCUT=%USERPROFILE%\Desktop\Job Application Tool.lnk
 powershell -NoProfile -Command ^
   "$s=(New-Object -COM WScript.Shell).CreateShortcut('%SHORTCUT%');" ^
   "$s.TargetPath='%SCRIPT_DIR%start.bat';" ^
   "$s.WorkingDirectory='%SCRIPT_DIR%';" ^
   "$s.WindowStyle=1;" ^
-  "$s.Description='Launch Resume Builder';" ^
+  "$s.IconLocation='%SCRIPT_DIR%icon.ico';" ^
+  "$s.Description='Launch Job Application Tool';" ^
   "$s.Save()"
 echo [OK] Shortcut created on your Desktop.
 echo.
@@ -56,7 +57,7 @@ echo.
 echo ================================================
 echo   Setup complete!
 echo.
-echo   Double-click "Resume Builder" on your Desktop
+echo   Double-click "Job Application Tool" on your Desktop
 echo   to launch the app anytime.
 echo ================================================
 echo.

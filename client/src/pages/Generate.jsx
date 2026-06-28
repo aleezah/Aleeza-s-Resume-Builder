@@ -67,6 +67,7 @@ function GenerateMain() {
   const [includeCerts, setIncludeCerts] = useState(false)
   const [includeProjects, setIncludeProjects] = useState(false)
   const [showCustomise, setShowCustomise] = useState(false)
+  const [resumePages, setResumePages] = useState(1)
 
   const genProgress = useProgressBar([
     [10, 'Sending to AI…'],
@@ -113,6 +114,7 @@ function GenerateMain() {
           selected_exp_ids: [...selectedExpIds],
           include_certs: includeCerts,
           include_projects: includeProjects,
+          resume_pages: resumePages,
         }
       })
       genProgress.finish()
@@ -210,7 +212,7 @@ function GenerateMain() {
                   <div className="flex-1 min-w-0">
                     <span className="text-sm text-white">{exp.title}</span>
                     <span className="text-xs text-gray-500 ml-2">@ {exp.company}</span>
-                    {exp.is_current && <span className="ml-2 badge bg-green-900 text-green-400 text-xs">current</span>}
+                    {!!exp.is_current && <span className="ml-2 badge bg-green-900 text-green-400 text-xs">current</span>}
                     <div className="text-xs text-gray-600">{exp.start_date}{exp.end_date || exp.is_current ? ` – ${exp.is_current ? 'Present' : exp.end_date}` : ''}</div>
                   </div>
                 </label>
