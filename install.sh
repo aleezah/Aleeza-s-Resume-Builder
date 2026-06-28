@@ -13,56 +13,61 @@ echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# ── Step 1: Ensure Node.js is available ──────────────────────────────────────
+# ── Step 1: Ensure Homebrew is available ─────────────────────────────────────
 
-# Bring Homebrew and nvm into PATH in case they exist but aren't in current shell
-export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.nvm/versions/node/$(ls $HOME/.nvm/versions/node 2>/dev/null | tail -1)/bin:$PATH"
-[ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
+# Activate Homebrew if it exists but isn't in PATH yet
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -f "/usr/local/bin/brew" ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
 
-if ! command -v node &> /dev/null; then
-    echo "[!] Node.js is not installed. Installing now..."
+if ! command -v brew &> /dev/null; then
+    echo "[!] Homebrew is not installed. Installing now..."
+    echo "    You may be asked for your Mac password — this is normal."
     echo ""
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-    # Try Homebrew first
-    if ! command -v brew &> /dev/null; then
-        echo "    Installing Homebrew (this takes a few minutes)..."
-        echo "    You may be asked for your Mac password — this is normal."
-        echo ""
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-        # Add Homebrew to PATH for this session (Apple Silicon vs Intel)
-        if [ -f "/opt/homebrew/bin/brew" ]; then
-            export PATH="/opt/homebrew/bin:$PATH"
-            eval "$(/opt/homebrew/bin/brew shellenv)"
-        elif [ -f "/usr/local/bin/brew" ]; then
-            export PATH="/usr/local/bin:$PATH"
-            eval "$(/usr/local/bin/brew shellenv)"
-        fi
-    fi
-
-    if command -v brew &> /dev/null; then
-        echo "    Installing Node.js LTS (v22) via Homebrew..."
-        brew install node@22
-        brew link node@22 --force --overwrite
-        export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
-    else
-        echo ""
-        echo "[ERROR] Could not install Homebrew automatically."
-        echo ""
-        echo "  Please install Node.js manually:"
-        echo "  1. Go to: https://nodejs.org"
-        echo "  2. Download and run the macOS installer"
-        echo "  3. Re-run this script when done"
-        echo ""
-        open "https://nodejs.org/en/download"
-        read -p "Press Enter after Node.js is installed to continue..."
+    # Activate after install
+    if [ -f "/opt/homebrew/bin/brew" ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -f "/usr/local/bin/brew" ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
     fi
 fi
+
+if ! command -v brew &> /dev/null; then
+    echo ""
+    echo "[ERROR] Could not install Homebrew. Please install it manually:"
+    echo "  https://brew.sh"
+    exit 1
+fi
+
+echo "[OK] Homebrew found."
+echo ""
+
+# ── Step 2: Ensure Node.js LTS (v22) is installed ────────────────────────────
+
+# Check if node@22 is already installed via brew
+if ! brew list node@22 &> /dev/null; then
+    echo "[!] Installing Node.js LTS (v22)..."
+    echo "    This may take a few minutes. Please wait."
+    echo ""
+    brew install node@22
+fi
+
+# Unlink any other node version and link node@22
+brew unlink node 2>/dev/null || true
+brew link node@22 --force --overwrite
+
+# Add node@22 to PATH for this session
+export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 # Final check
 if ! command -v node &> /dev/null; then
     echo ""
-    echo "[ERROR] Node.js still not found. Please restart Terminal and run this script again."
+    echo "[ERROR] Node.js still not found after install."
+    echo "  Try closing this Terminal window and running the script again."
     exit 1
 fi
 
@@ -70,16 +75,26 @@ NODE_VER=$(node -v)
 echo "[OK] Node.js $NODE_VER found."
 echo ""
 
-# ── Step 2: Install npm dependencies ─────────────────────────────────────────
+# ── Step 3: Install app dependencies ─────────────────────────────────────────
 
-echo "[1/2] Installing dependencies (this may take a minute)..."
+echo "[1/2] Installing app components (this may take a minute)..."
 cd "$SCRIPT_DIR"
 npm install
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "[ERROR] Installation failed. See the error above."
+    exit 1
+fi
 npm install --prefix client
-echo "[OK] Dependencies installed."
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "[ERROR] Installation failed. See the error above."
+    exit 1
+fi
+echo "[OK] App components installed."
 echo ""
 
-# ── Step 3: Create .app launcher in /Applications ────────────────────────────
+# ── Step 4: Create .app launcher in /Applications ────────────────────────────
 
 echo "[2/2] Creating app launcher in /Applications..."
 
@@ -88,6 +103,7 @@ CONTENTS="$APP_DIR/Contents"
 MACOS="$CONTENTS/MacOS"
 RESOURCES="$CONTENTS/Resources"
 
+rm -rf "$APP_DIR" 2>/dev/null || true
 mkdir -p "$MACOS" "$RESOURCES"
 
 cat > "$CONTENTS/Info.plist" << PLIST
@@ -113,13 +129,9 @@ cat > "$CONTENTS/Info.plist" << PLIST
 </plist>
 PLIST
 
-# Build the node path so the .app can find node even without a full shell
-NODE_PATH=$(command -v node || echo "/opt/homebrew/bin/node")
-NODE_DIR=$(dirname "$NODE_PATH")
-
 cat > "$MACOS/launch" << LAUNCHER
 #!/bin/bash
-export PATH="$NODE_DIR:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 cd "$SCRIPT_DIR"
 npm run dev &
 SERVER_PID=\$!
@@ -137,5 +149,8 @@ echo "  Setup complete!"
 echo ""
 echo "  Open 'Job Application Tool' from your"
 echo "  Applications folder or Spotlight (Cmd+Space)."
+echo ""
+echo "  Or run this anytime to launch directly:"
+echo "  bash \"$SCRIPT_DIR/start.sh\""
 echo "================================================"
 echo ""
