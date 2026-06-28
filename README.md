@@ -15,6 +15,8 @@ A local web app that generates tailored resumes and cover letters using your pro
 
 ## Installation
 
+> **Disk space:** Setup requires approximately **300–400 MB** of free space (~150 MB for Node.js if not already installed, ~200 MB for app dependencies). Make sure you have enough room before running the installer.
+
 ### Windows — no coding required
 
 1. Download this repo: click **Code → Download ZIP** at the top of this page, then extract the ZIP anywhere (e.g. your Desktop or Documents)

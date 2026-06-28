@@ -7,6 +7,11 @@ echo ================================================
 echo   Job Application Tool — First-Time Setup
 echo ================================================
 echo.
+echo   NOTE: This setup requires approximately 300-400 MB
+echo   of free disk space. Make sure you have enough room
+echo   before continuing.
+echo.
+pause
 
 :: ── Step 1: Ensure Node.js is installed ──────────────────────────────────────
 

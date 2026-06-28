@@ -4,6 +4,12 @@ echo "================================================"
 echo "  Job Application Tool — First-Time Setup"
 echo "================================================"
 echo ""
+echo "  NOTE: This setup requires approximately 300-400 MB"
+echo "  of free disk space. Make sure you have enough room"
+echo "  before continuing."
+echo ""
+read -p "  Press Enter to continue or Ctrl+C to cancel..."
+echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
