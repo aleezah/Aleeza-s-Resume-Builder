@@ -94,63 +94,48 @@ fi
 echo "[OK] App components installed."
 echo ""
 
-# ── Step 4: Create .app launcher in /Applications ────────────────────────────
+# ── Step 4: Create .app launcher using AppleScript ───────────────────────────
 
-echo "[2/2] Creating app launcher in /Applications..."
+echo "[2/2] Creating app launcher..."
 
-APP_DIR="/Applications/Job Application Tool.app"
-CONTENTS="$APP_DIR/Contents"
-MACOS="$CONTENTS/MacOS"
-RESOURCES="$CONTENTS/Resources"
+APP_PATH="/Applications/Job Application Tool.app"
 
-rm -rf "$APP_DIR" 2>/dev/null || true
-mkdir -p "$MACOS" "$RESOURCES"
+# Remove old version if it exists
+rm -rf "$APP_PATH" 2>/dev/null || true
 
-cat > "$CONTENTS/Info.plist" << PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key>
-    <string>launch</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.aleezah.jobapplicationtool</string>
-    <key>CFBundleName</key>
-    <string>Job Application Tool</string>
-    <key>CFBundleDisplayName</key>
-    <string>Job Application Tool</string>
-    <key>CFBundleVersion</key>
-    <string>1.0</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.13</string>
-</dict>
-</plist>
-PLIST
+# Build AppleScript app — macOS handles these natively without security warnings
+osacompile -o "$APP_PATH" << APPLESCRIPT
+on run
+    set appDir to "$SCRIPT_DIR"
+    set nodePath to "/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    tell application "Terminal"
+        activate
+        do script "export PATH=\"" & nodePath & "\"; cd " & quoted form of appDir & " && npm run dev"
+    end tell
+    delay 5
+    open location "http://localhost:5173"
+end run
+APPLESCRIPT
 
-cat > "$MACOS/launch" << LAUNCHER
-#!/bin/bash
-export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-cd "$SCRIPT_DIR"
-npm run dev &
-SERVER_PID=\$!
-sleep 4
-open http://localhost:5173
-wait \$SERVER_PID
-LAUNCHER
+# Remove quarantine flag so macOS doesn't block it
+xattr -cr "$APP_PATH" 2>/dev/null || true
 
-chmod +x "$MACOS/launch"
-echo "[OK] App created in /Applications."
+# Also create a Desktop alias for easy access
+ALIAS_PATH="$HOME/Desktop/Job Application Tool"
+rm -f "$ALIAS_PATH" 2>/dev/null || true
+osascript -e "tell application \"Finder\" to make alias file to POSIX file \"$APP_PATH\" at POSIX file \"$HOME/Desktop\""
+
+echo "[OK] App created — you can open it from:"
+echo "     • Applications folder"
+echo "     • Spotlight (Cmd+Space → Job Application Tool)"
+echo "     • Your Desktop"
 echo ""
 
 echo "================================================"
 echo "  Setup complete!"
 echo ""
-echo "  Open 'Job Application Tool' from your"
-echo "  Applications folder or Spotlight (Cmd+Space)."
-echo ""
-echo "  Or run this anytime to launch directly:"
-echo "  bash \"$SCRIPT_DIR/start.sh\""
+echo "  Double-click 'Job Application Tool' on your"
+echo "  Desktop or in Applications to launch anytime."
+echo "  Your browser will open automatically."
 echo "================================================"
 echo ""
