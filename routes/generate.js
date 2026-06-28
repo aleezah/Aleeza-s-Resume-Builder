@@ -344,11 +344,11 @@ RULES:
 - Keep it to 4–5 paragraphs, under 450 words
 - No filler sentences — every line must earn its place
 - Never stack more than 2 skills or tools in a single sentence
-- **STRICT FACT RULE**: Every specific claim (tools, skills, responsibilities) must be explicitly stated in the candidate's bullet points above. Do NOT infer, assume, or add anything that does not appear word-for-word or near-verbatim in the profile bullets. If "GitHub" is not in a bullet point, do not mention GitHub. If "CI/CD" is not in a bullet point, do not mention CI/CD. Only what is written counts.
+- Every claim about the candidate must reference a specific fact from their profile — not "I have SQL experience" but "at Rentsync I perform SQL-based data profiling and cleansing daily across live production environments"
 - The fourth paragraph should feel the warmest and most genuine — let that energy carry through the whole letter
 
-⛔ BANNED WORDS & PHRASES — if any of these appear in your output, the response will be rejected. Do not use them under any circumstances:
-"I am writing to apply" | "I am excited" | "I am thrilled" | "I am eager" | "I am confident" | "utilize" | "I look forward to discussing" | "ideal candidate" | "make me a great fit" | "passionate about" | "I believe I can" | "my background spans" | "maps directly to" | "directly translates to" | "aligns with" | "functional requirements" | "I am drawn to" | "I'm drawn to" | "demonstrated experience" | "in this role I" | "technical profile" | "I look forward to hearing from you" | "I'm drawn to the opportunity" | "I'd welcome the chance" | "I would welcome the chance"
+BANNED WORDS & PHRASES — never use these under any circumstances:
+"I am writing to apply", "I am excited/thrilled/eager", "I am confident", "utilize", "I look forward to discussing my application", "ideal candidate", "make me a great fit", "passionate about", "I believe I can", "my background spans", "maps directly to", "aligns with", "functional requirements", "I am drawn to", "demonstrated experience", "in this role I", "technical profile", "I look forward to hearing from you", "I'm drawn to the opportunity", "directly translates to", "I'd welcome the chance"
 
 ===========================
 GENERAL RULES:
