@@ -41,9 +41,10 @@ if ! command -v node &> /dev/null; then
     fi
 
     if command -v brew &> /dev/null; then
-        echo "    Installing Node.js via Homebrew..."
-        brew install node
-        export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+        echo "    Installing Node.js LTS (v22) via Homebrew..."
+        brew install node@22
+        brew link node@22 --force --overwrite
+        export PATH="/opt/homebrew/opt/node@22/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
     else
         echo ""
         echo "[ERROR] Could not install Homebrew automatically."

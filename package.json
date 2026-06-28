@@ -2,6 +2,9 @@
   "name": "job-application-tool",
   "version": "1.0.0",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18 <26"
+  },
   "scripts": {
     "dev": "concurrently \"node server.js\" \"npm run dev --prefix client\"",
     "start": "node server.js",
