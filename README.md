@@ -15,10 +15,10 @@ A local web app that generates tailored resumes and cover letters using your pro
 
 ## Installation
 
-### Option A — Windows installer (easiest, no coding required)
+### Windows — no coding required
 
 1. Download and install [Node.js LTS](https://nodejs.org/en/download) if you don't have it
-2. Download this repo as a ZIP → **Code → Download ZIP** → extract it anywhere
+2. Download this repo: **Code → Download ZIP** → extract it anywhere
 3. Double-click `install.bat`
    - Checks for Node.js and installs all dependencies automatically
    - Creates a **Resume Builder** shortcut on your Desktop
@@ -28,33 +28,53 @@ A local web app that generates tailored resumes and cover letters using your pro
 
 ---
 
-### Option B — Developer setup (Mac / Linux / Windows terminal)
+### Mac — no coding required
 
-**Requirements**
-- [Node.js](https://nodejs.org/) v18 or later
-- An AI provider — at least one of:
-  - [Groq](https://console.groq.com/) API key (free tier)
-  - [Google Gemini](https://aistudio.google.com/) API key (free tier)
-  - [Ollama](https://ollama.com/) running locally (free)
-  - [Anthropic Claude](https://console.anthropic.com/) API key (paid)
-  - [OpenAI](https://platform.openai.com/) API key (paid)
+1. Download this repo: **Code → Download ZIP** → extract it anywhere
+2. Open **Terminal** (search "Terminal" in Spotlight with `Cmd + Space`)
+3. Drag the extracted folder into the Terminal window, then type `/install.sh` after it and press Enter
+   ```
+   /path/to/resume-builder/install.sh
+   ```
+   - Installs Node.js automatically via Homebrew if needed (or prompts you to install it)
+   - Installs all dependencies
+   - Adds **Resume Builder** to your Applications folder
+4. Open **Resume Builder** from Launchpad or Spotlight (`Cmd + Space` → "Resume Builder") anytime to launch
 
-**Steps**
+> **Already have Node.js?** You can also just run `./start.sh` from the folder to launch directly.
+
+---
+
+### Developer setup (terminal)
 
 ```bash
-# 1. Clone
+# Clone
 git clone https://github.com/aleezah/Aleeza-s-Resume-Builder.git
 cd Aleeza-s-Resume-Builder
 
-# 2. Install dependencies
+# Install dependencies
 npm run install:all
 
-# 3. Start
+# Start
 npm run dev        # Mac / Linux
 start.bat          # Windows
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## AI provider setup
+
+You'll need at least one AI provider configured in the app's Settings page:
+
+| Provider | Cost | Sign up |
+|---|---|---|
+| Groq | Free tier | [console.groq.com](https://console.groq.com) |
+| Google Gemini | Free tier | [aistudio.google.com](https://aistudio.google.com) |
+| Ollama | Free, runs locally | [ollama.com](https://ollama.com) |
+| Anthropic Claude | Paid | [console.anthropic.com](https://console.anthropic.com) |
+| OpenAI | Paid | [platform.openai.com](https://platform.openai.com) |
 
 ---
 
@@ -82,7 +102,9 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ```
 resume-builder/
 ├── install.bat            # One-click Windows setup (run once)
-├── start.bat              # Launch the app
+├── install.sh             # One-click Mac setup (run once)
+├── start.bat              # Launch the app (Windows)
+├── start.sh               # Launch the app (Mac)
 ├── ResumeBuilder.iss      # Inno Setup script to build a .exe installer
 ├── server.js              # Express server entry point
 ├── db/                    # SQLite database setup
