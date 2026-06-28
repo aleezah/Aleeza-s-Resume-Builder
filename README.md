@@ -17,31 +17,36 @@ A local web app that generates tailored resumes and cover letters using your pro
 
 ### Windows — no coding required
 
-1. Download and install [Node.js LTS](https://nodejs.org/en/download) if you don't have it
-2. Download this repo: **Code → Download ZIP** → extract it anywhere
-3. Double-click `install.bat`
-   - Checks for Node.js and installs all dependencies automatically
-   - Creates a **Job Application Tool** shortcut on your Desktop
-4. Double-click the **Job Application Tool** shortcut anytime to launch — your browser opens automatically
+1. Download this repo: click **Code → Download ZIP** at the top of this page, then extract the ZIP anywhere (e.g. your Desktop or Documents)
+2. Open the extracted folder and double-click **`install.bat`**
+   - Right-click → **Run as administrator** if prompted
+   - **Node.js is installed automatically** — no need to do anything yourself:
+     - On Windows 10 / 11 it installs silently via Windows Package Manager (`winget`)
+     - If that isn't available, it downloads and runs the official Node.js installer for you
+   - All app components are installed
+   - A **Job Application Tool** shortcut is created on your Desktop
+3. Double-click the **Job Application Tool** shortcut anytime to launch — your browser opens automatically
 
-> **Want a proper `.exe` installer?** Install [Inno Setup](https://jrsoftware.org/isinfo.php), open `ResumeBuilder.iss`, and click Build. This produces a `ResumeBuilder-Setup.exe` you can share with anyone.
+> If Windows asks *"Do you want to allow this app to make changes?"*, click **Yes** — this is needed to install Node.js.
 
 ---
 
 ### Mac — no coding required
 
-1. Download this repo: **Code → Download ZIP** → extract it anywhere
-2. Open **Terminal** (search "Terminal" in Spotlight with `Cmd + Space`)
-3. Drag the extracted folder into the Terminal window, then type `/install.sh` after it and press Enter
+1. Download this repo: click **Code → Download ZIP** at the top of this page, then extract the ZIP anywhere
+2. Open **Terminal**: press `Cmd + Space`, type `Terminal`, and press Enter
+3. In Terminal, type `bash ` (with a space after it), then drag the extracted folder into the Terminal window, then type `/install.sh` and press Enter:
    ```
-   /path/to/resume-builder/install.sh
+   bash /path/to/resume-builder/install.sh
    ```
-   - Installs Node.js automatically via Homebrew if needed (or prompts you to install it)
-   - Installs all dependencies
-   - Adds **Job Application Tool** to your Applications folder
-4. Open **Job Application Tool** from Launchpad or Spotlight (`Cmd + Space` → "Job Application Tool") anytime to launch
+   - **Node.js is installed automatically** — no need to do anything yourself:
+     - Homebrew is installed first if needed (you may be asked for your Mac password — this is normal)
+     - Node.js is then installed via Homebrew
+   - All app components are installed
+   - **Job Application Tool** is added to your Applications folder
+4. Open **Job Application Tool** from Launchpad or Spotlight (`Cmd + Space` → type "Job Application Tool") anytime to launch
 
-> **Already have Node.js?** You can also just run `./start.sh` from the folder to launch directly.
+> If Mac says *"install.sh cannot be opened because it is from an unidentified developer"*, right-click the file → **Open** → **Open** to bypass this.
 
 ---
 
