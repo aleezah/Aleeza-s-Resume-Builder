@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
     const prompt = buildPrompt(context, job, existingResume, templateTex, coverLetterTemplate, options)
     const aiResult = await callAI(prompt, { max_tokens: 6000 })
 
-    const { resumeMd, coverLetterMd, latexFromAI } = parseAIResponse(aiResult)
+    const { resumeMd, coverLetterMd, latexFromAI } = parseAIResponse(aiResult.text)
 
     // LaTeX: use AI-filled template if provided, else auto-generate
     const latexContent = latexFromAI || generateLatex(resumeMd, context.basics)
@@ -71,8 +71,8 @@ router.post('/', async (req, res) => {
     const texPath = path.join(OUTPUT_DIR, `${genId}_resume.tex`)
     fs.writeFileSync(texPath, latexContent, 'utf8')
 
-    db.prepare(`UPDATE generations SET resume_md=?,cover_letter_md=?,resume_latex=? WHERE id=?`)
-      .run(resumeMd, coverLetterMd, latexContent, genId)
+    db.prepare(`UPDATE generations SET resume_md=?,cover_letter_md=?,resume_latex=?,ai_provider=?,prompt_tokens=?,completion_tokens=? WHERE id=?`)
+      .run(resumeMd, coverLetterMd, latexContent, aiResult.provider, aiResult.prompt_tokens, aiResult.completion_tokens, genId)
 
     res.json({
       id: genId,

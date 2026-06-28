@@ -162,8 +162,8 @@ Rules:
 - Return ONLY bullet points, one per line, each starting with •
 - No intro, no explanation`
 
-    const raw = await callAI(prompt, { temperature: 0.4, max_tokens: 1024 })
-    const bullets = raw.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean)
+    const result = await callAI(prompt, { temperature: 0.4, max_tokens: 1024 })
+    const bullets = result.text.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean)
 
     res.json({ bullets, languages, commit_count: commits.length })
   } catch (err) {

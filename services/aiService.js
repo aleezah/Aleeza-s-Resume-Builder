@@ -10,18 +10,22 @@ function getProvider() {
   return getSetting('ai_provider') || process.env.AI_PROVIDER || 'ollama'
 }
 
+// Returns { text, prompt_tokens, completion_tokens, provider }
 async function callAI(prompt, options = {}) {
   const provider = getProvider()
+  let result
 
   switch (provider) {
-    case 'ollama':   return callOllama(prompt, options)
-    case 'gemini':   return callGemini(prompt, options)
-    case 'groq':     return callGroq(prompt, options)
-    case 'anthropic': return callAnthropic(prompt, options)
-    case 'openai':   return callOpenAI(prompt, options)
+    case 'ollama':    result = await callOllama(prompt, options); break
+    case 'gemini':    result = await callGemini(prompt, options); break
+    case 'groq':      result = await callGroq(prompt, options); break
+    case 'anthropic': result = await callAnthropic(prompt, options); break
+    case 'openai':    result = await callOpenAI(prompt, options); break
     default:
       throw new Error(`Unknown AI provider: "${provider}". Go to Settings to configure one.`)
   }
+
+  return { ...result, provider }
 }
 
 // ── Ollama (free, local) ──────────────────────────────────────────────────────
@@ -37,7 +41,7 @@ async function callOllama(prompt, options) {
     options: { temperature: options.temperature ?? 0.7, num_predict: options.max_tokens ?? 4096 }
   }, { timeout: 180000 })
 
-  return data.response || ''
+  return { text: data.response || '', prompt_tokens: data.prompt_eval_count || 0, completion_tokens: data.eval_count || 0 }
 }
 
 // ── Google Gemini (free tier) ─────────────────────────────────────────────────
@@ -67,7 +71,11 @@ async function callGemini(prompt, options) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const { data } = await axios.post(url, body, { headers, timeout: 120000 })
-        return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+        return {
+          text: data.candidates?.[0]?.content?.parts?.[0]?.text || '',
+          prompt_tokens: data.usageMetadata?.promptTokenCount || 0,
+          completion_tokens: data.usageMetadata?.candidatesTokenCount || 0,
+        }
       } catch (err) {
         const status = err.response?.status
         const geminiMsg = err.response?.data?.error?.message || ''
@@ -141,7 +149,7 @@ async function callGroq(prompt, options) {
     { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 120000 }
   )
 
-  return data.choices?.[0]?.message?.content || ''
+  return { text: data.choices?.[0]?.message?.content || '', prompt_tokens: data.usage?.prompt_tokens || 0, completion_tokens: data.usage?.completion_tokens || 0 }
 }
 
 // ── Anthropic Claude (paid) ───────────────────────────────────────────────────
@@ -168,7 +176,7 @@ async function callAnthropic(prompt, options) {
     }
   )
 
-  return data.content?.[0]?.text || ''
+  return { text: data.content?.[0]?.text || '', prompt_tokens: data.usage?.input_tokens || 0, completion_tokens: data.usage?.output_tokens || 0 }
 }
 
 // ── OpenAI (paid) ─────────────────────────────────────────────────────────────
@@ -189,7 +197,7 @@ async function callOpenAI(prompt, options) {
     { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 120000 }
   )
 
-  return data.choices?.[0]?.message?.content || ''
+  return { text: data.choices?.[0]?.message?.content || '', prompt_tokens: data.usage?.prompt_tokens || 0, completion_tokens: data.usage?.completion_tokens || 0 }
 }
 
 module.exports = { callAI, getProvider, listGeminiModels }

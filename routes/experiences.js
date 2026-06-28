@@ -75,8 +75,8 @@ Your task:
 8. No introduction, no explanation, no extra text — bullets only`
 
   try {
-    const raw = await callAI(prompt, { temperature: 0.3, max_tokens: 6000 })
-    const bullets = raw.split('\n')
+    const result = await callAI(prompt, { temperature: 0.3, max_tokens: 6000 })
+    const bullets = result.text.split('\n')
       .map(l => l.replace(/^[-•*]\s*/, '').trim())
       .filter(Boolean)
     res.json({ original: allBullets, bullets })

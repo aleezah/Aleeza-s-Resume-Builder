@@ -101,7 +101,7 @@ router.post('/test-ai', async (_req, res) => {
   try {
     const { callAI } = require('../services/aiService')
     const result = await callAI('Say "OK" and nothing else.')
-    res.json({ success: true, response: result.trim() })
+    res.json({ success: true, response: result.text.trim() })
   } catch (err) {
     res.status(500).json({ success: false, error: err.message })
   }
