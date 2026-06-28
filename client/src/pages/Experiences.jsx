@@ -196,8 +196,8 @@ function ExperienceSection({ profileId }) {
   async function handlePolish(item) {
     setPolishing(item.id)
     try {
-      const { bullets } = await api.polishExperience(item.id)
-      setPolishPreview({ id: item.id, bullets })
+      const { original, bullets } = await api.polishExperience(item.id)
+      setPolishPreview({ id: item.id, original, bullets })
     } catch (e) {
       alert(e.response?.data?.error || e.message)
     }
@@ -222,30 +222,67 @@ function ExperienceSection({ profileId }) {
       )}
 
       {/* Polish preview modal */}
-      {polishPreview && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
-          <div className="bg-gray-900 rounded-xl border border-brand-700 w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-800">
-              <div>
-                <h2 className="font-bold text-white text-lg">Cleaned Bullets</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Duplicates removed, wording improved — no new facts added</p>
+      {polishPreview && (() => {
+        const beforeSet = new Set(polishPreview.original.map(b => b.toLowerCase().trim()))
+        const afterSet  = new Set(polishPreview.bullets.map(b => b.toLowerCase().trim()))
+        return (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
+            <div className="bg-gray-900 rounded-xl border border-brand-700 w-full max-w-5xl max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-5 border-b border-gray-800">
+                <div>
+                  <h2 className="font-bold text-white text-lg">✨ Before & After</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {polishPreview.original.length} bullets → {polishPreview.bullets.length} bullets · duplicates removed, wording improved, no new facts added
+                  </p>
+                </div>
+                <div className="flex gap-3 text-xs text-gray-500">
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-800 inline-block"/>Removed</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-800 inline-block"/>New / improved</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 divide-x divide-gray-800 overflow-y-auto flex-1">
+                {/* Before */}
+                <div className="p-5">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Before ({polishPreview.original.length})</p>
+                  <div className="space-y-2">
+                    {polishPreview.original.map((b, i) => {
+                      const kept = afterSet.has(b.toLowerCase().trim())
+                      return (
+                        <div key={i} className={`flex items-start gap-2 text-sm rounded px-2 py-1 ${kept ? 'text-gray-400' : 'text-red-400 bg-red-900/20 line-through decoration-red-700'}`}>
+                          <span className="mt-0.5 shrink-0">•</span>
+                          <span>{b}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* After */}
+                <div className="p-5">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">After ({polishPreview.bullets.length})</p>
+                  <div className="space-y-2">
+                    {polishPreview.bullets.map((b, i) => {
+                      const isNew = !beforeSet.has(b.toLowerCase().trim())
+                      return (
+                        <div key={i} className={`flex items-start gap-2 text-sm rounded px-2 py-1 ${isNew ? 'text-green-300 bg-green-900/20' : 'text-gray-300'}`}>
+                          <span className="mt-0.5 shrink-0 text-brand-400">•</span>
+                          <span>{b}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-5 border-t border-gray-800">
+                <button onClick={() => setPolishPreview(null)} className="btn-secondary">Discard</button>
+                <button onClick={applyPolish} className="btn-primary">✓ Apply & Save</button>
               </div>
             </div>
-            <div className="overflow-y-auto flex-1 p-5 space-y-2">
-              {polishPreview.bullets.map((b, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
-                  <span className="text-brand-400 mt-0.5 shrink-0">•</span>
-                  <span>{b}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex items-center justify-between p-5 border-t border-gray-800">
-              <button onClick={() => setPolishPreview(null)} className="btn-secondary">Discard</button>
-              <button onClick={applyPolish} className="btn-primary">✓ Apply & Save</button>
-            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
       <div className="flex items-center justify-between mb-3">
         <p className="section-heading mb-0">Work Experience</p>
         <div className="flex gap-2">

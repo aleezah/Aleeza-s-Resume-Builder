@@ -74,11 +74,11 @@ Your task:
 7. No introduction, no explanation, no extra text`
 
   try {
-    const raw = await callAI(prompt, { temperature: 0.3, max_tokens: 1024 })
+    const raw = await callAI(prompt, { temperature: 0.3, max_tokens: 6000 })
     const bullets = raw.split('\n')
       .map(l => l.replace(/^[-•*]\s*/, '').trim())
       .filter(Boolean)
-    res.json({ bullets })
+    res.json({ original: allBullets, bullets })
   } catch (e) {
     res.status(500).json({ error: e.message })
   }
