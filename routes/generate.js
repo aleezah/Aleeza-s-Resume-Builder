@@ -125,6 +125,40 @@ router.delete('/:id', (req, res) => {
   res.json({ success: true })
 })
 
+router.get('/usage', (req, res) => {
+  const db = getDb()
+  const rows = db.prepare(`
+    SELECT ai_provider,
+           COUNT(*) as generations,
+           SUM(COALESCE(prompt_tokens, 0)) as prompt_tokens,
+           SUM(COALESCE(completion_tokens, 0)) as completion_tokens
+    FROM generations
+    GROUP BY ai_provider
+  `).all()
+
+  // Pricing per million tokens: [input, output]
+  const PRICING = {
+    anthropic: [3.00, 15.00],
+    openai:    [0.15,  0.60],  // gpt-4o-mini default
+    gemini:    [0.075, 0.30],
+    groq:      [0,     0],     // free tier
+    ollama:    [0,     0],     // local/free
+  }
+
+  let totalGenerations = 0, totalPrompt = 0, totalCompletion = 0, totalCost = 0
+  const byProvider = rows.map(r => {
+    const [inPrice, outPrice] = PRICING[r.ai_provider] || [0, 0]
+    const cost = (r.prompt_tokens / 1_000_000) * inPrice + (r.completion_tokens / 1_000_000) * outPrice
+    totalGenerations += r.generations
+    totalPrompt     += r.prompt_tokens
+    totalCompletion += r.completion_tokens
+    totalCost       += cost
+    return { provider: r.ai_provider, generations: r.generations, prompt_tokens: r.prompt_tokens, completion_tokens: r.completion_tokens, cost }
+  })
+
+  res.json({ totalGenerations, totalPrompt, totalCompletion, totalCost, byProvider })
+})
+
 router.get('/', (req, res) => {
   const { profile_id } = req.query
   if (!profile_id) return res.status(400).json({ error: 'profile_id required' })
