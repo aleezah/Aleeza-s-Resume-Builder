@@ -94,7 +94,24 @@ fi
 echo "[OK] App components installed."
 echo ""
 
-# ── Step 4: Create .app launcher using AppleScript ───────────────────────────
+# ── Step 4: Convert icon to .icns format ─────────────────────────────────────
+
+ICNS_PATH="$SCRIPT_DIR/icon.icns"
+ICO_PATH="$SCRIPT_DIR/Job Application Tool.ico"
+
+if [ ! -f "$ICNS_PATH" ] && [ -f "$ICO_PATH" ]; then
+    echo "    Converting icon to Mac format..."
+    ICONSET=$(mktemp -d /tmp/icon.iconset.XXXX)
+    # sips can read .ico and convert to png
+    sips -s format png "$ICO_PATH" --out /tmp/icon_src.png &>/dev/null
+    for size in 16 32 64 128 256 512; do
+        sips -z $size $size /tmp/icon_src.png --out "$ICONSET/icon_${size}x${size}.png" &>/dev/null
+    done
+    iconutil -c icns "$ICONSET" -o "$ICNS_PATH" 2>/dev/null || true
+    rm -rf "$ICONSET" /tmp/icon_src.png
+fi
+
+# ── Step 5: Create .app launcher using AppleScript ───────────────────────────
 
 echo "[2/2] Creating app launcher..."
 
@@ -116,6 +133,11 @@ on run
     open location "http://localhost:5173"
 end run
 APPLESCRIPT
+
+# Apply icon if we have one
+if [ -f "$ICNS_PATH" ]; then
+    cp "$ICNS_PATH" "$APP_PATH/Contents/Resources/applet.icns"
+fi
 
 # Remove quarantine flag so macOS doesn't block it
 xattr -cr "$APP_PATH" 2>/dev/null || true
