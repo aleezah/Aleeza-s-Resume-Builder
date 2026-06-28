@@ -308,6 +308,8 @@ ${existingResume ? '- Keep the EXACT same structure, section order, and formatti
 ===========================
 COVER LETTER INSTRUCTIONS:
 ===========================
+You are writing a cover letter for a real job application. This is not a template exercise — write like a specific, intelligent person who has done this work and wants this particular job.
+
 Use this exact header format:
 \`# ${basics?.full_name || 'Candidate'}\`
 \`_${[basics?.location, basics?.phone].filter(Boolean).join('  ')}_\`
@@ -320,22 +322,33 @@ ${today}
 
 Dear Hiring Manager,
 
-- **Para 1**: State degree, years of experience, and the specific role. Then immediately connect to why this company and mission matter — make it personal and specific, not generic.
-- **Para 2**: Map current role experience directly to a specific requirement in the job posting. Pull concrete facts from the bullet points in Material 2 — name the employer, name what you actually built or did. No vague summaries.
-- **Para 3**: Map a previous role to another specific requirement. Again cite real bullet-point facts. The reader should be able to verify these against a resume.
-- **Para 4**: Explain why THIS company specifically — their product, mission, industry, or values from the job posting. This paragraph is about them, not you. No skill lists here.
-- **Para 5 / Close**: Brief warm thank-you, clear call to action, include ${basics?.phone || 'phone'} and ${basics?.email || 'email'}.
+STRUCTURE:
+- **Para 1**: Open with a direct, confident statement of intent — who you are, what you do, and why this specific company caught your attention. Never start with "I am writing to apply." Hook the reader immediately. Reference the role by name.
+- **Para 2**: Map current role experience directly to a specific requirement in the job posting. Pull concrete facts from the candidate's profile — name the employer, name what was actually built or done. No vague summaries. No skill stacking.
+- **Para 3**: Map a previous role to another specific requirement. Again cite real facts. The reader should be able to verify these against a resume.
+- **Para 4**: This paragraph is entirely about them — their product, mission, industry, or values from the job posting. Show you understand what they actually do and why it matters. No skill lists. No "I believe I can." Make it feel like you've thought about this company specifically, not just the job title.
+- **Para 5 / Close**: One or two warm, direct sentences. Clear call to action. Include ${basics?.phone || 'phone'} and ${basics?.email || 'email'}.
 
 Sincerely,
 
 ${basics?.full_name || 'Candidate'}
 
+TONE & VOICE:
+- Write like a smart, confident person talking to another professional — not like a formal document
+- Imagine the candidate speaking directly to the hiring manager — knowledgeable but human, not rehearsed
+- Vary sentence length to create rhythm. Short sentences are okay. Not everything needs to be a complex clause.
+- Match the tone of the job posting — formal if formal, modern if casual
+- ${coverLetterTemplate ? "Mirror my previous cover letter's sentence structure, pacing, and voice — write as if the same person wrote both" : 'Professional, direct, confident, and genuine — like a real person, not a cover letter generator'}
+
+RULES:
 - Keep it to 4–5 paragraphs, under 450 words
-- Tone: match the tone of the job posting (formal if formal, modern if casual)
-- ${coverLetterTemplate ? 'Mirror my previous cover letter\'s sentence structure, pacing, and voice — write as if the same person wrote both' : 'Write in a professional, direct, confident but genuine tone'}
-- No filler sentences — every line must serve a purpose
-- Do NOT write: "I am excited/confident/impressed", "utilize", "I look forward to discussing my application", "ideal candidate", "make me a great fit", "passionate about", "I believe I can", "my background spans", "the technical profile of this role"
-- Proof rule: every claim about the candidate's abilities must reference a specific fact from their profile bullets — not "I have SQL experience" but "at Rentsync I perform SQL-based data profiling and cleansing daily across live production environments"
+- No filler sentences — every line must earn its place
+- Never stack more than 2 skills or tools in a single sentence
+- Every claim about the candidate must reference a specific fact from their profile — not "I have SQL experience" but "at Rentsync I perform SQL-based data profiling and cleansing daily across live production environments"
+- The fourth paragraph should feel the warmest and most genuine — let that energy carry through the whole letter
+
+BANNED WORDS & PHRASES — never use these under any circumstances:
+"I am writing to apply", "I am excited/thrilled/eager", "I am confident", "utilize", "I look forward to discussing my application", "ideal candidate", "make me a great fit", "passionate about", "I believe I can", "my background spans", "maps directly to", "aligns with", "functional requirements", "I am drawn to", "demonstrated experience", "in this role I", "technical profile", "I look forward to hearing from you"
 
 ===========================
 GENERAL RULES:
