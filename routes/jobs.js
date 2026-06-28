@@ -47,6 +47,30 @@ router.delete('/:id', (req, res) => {
   res.json({ success: true })
 })
 
+router.get('/export/csv', (req, res) => {
+  const { profile_id } = req.query
+  if (!profile_id) return res.status(400).json({ error: 'profile_id required' })
+  const rows = getDb().prepare('SELECT * FROM job_descriptions WHERE profile_id = ? ORDER BY created_at DESC').all(profile_id)
+
+  const escape = v => `"${String(v ?? '').replace(/"/g, '""').replace(/\n/g, ' ')}"`
+  const headers = ['Company', 'Title', 'Status', 'URL', 'Notes', 'Date Added']
+  const lines = [
+    headers.join(','),
+    ...rows.map(r => [
+      escape(r.company),
+      escape(r.title),
+      escape(r.status || 'new'),
+      escape(r.url),
+      escape(r.notes),
+      escape(r.created_at ? new Date(r.created_at * 1000).toLocaleDateString('en-CA') : '')
+    ].join(','))
+  ]
+
+  res.setHeader('Content-Type', 'text/csv')
+  res.setHeader('Content-Disposition', 'attachment; filename="jobs.csv"')
+  res.send(lines.join('\r\n'))
+})
+
 // Get all generations for a job
 router.get('/:id/generations', (req, res) => {
   const rows = getDb().prepare('SELECT * FROM generations WHERE job_id = ? ORDER BY created_at DESC').all(req.params.id)

@@ -8,65 +8,73 @@ A local web app that generates tailored resumes and cover letters using your pro
 - Save job postings (paste or scrape from URL) and generate tailored applications in one click
 - Outputs a Word document (DOCX), a filled LaTeX `.tex` file, and a cover letter
 - Choose which experiences to include per generation
+- Export your job tracker to CSV / Excel
 - Supports Ollama (free/local), Google Gemini, Groq, Anthropic Claude, and OpenAI
 
 ---
 
-## Requirements
+## Installation
 
-- [Node.js](https://nodejs.org/) v18 or later
-- npm (comes with Node.js)
-- An AI provider — at least one of:
-  - [Ollama](https://ollama.com/) running locally (free)
-  - [Groq](https://console.groq.com/) API key (free tier)
-  - [Google Gemini](https://aistudio.google.com/) API key (free tier)
-  - [Anthropic Claude](https://console.anthropic.com/) API key (paid)
-  - [OpenAI](https://platform.openai.com/) API key (paid)
+### Windows — no coding required
+
+1. Download and install [Node.js LTS](https://nodejs.org/en/download) if you don't have it
+2. Download this repo: **Code → Download ZIP** → extract it anywhere
+3. Double-click `install.bat`
+   - Checks for Node.js and installs all dependencies automatically
+   - Creates a **Resume Builder** shortcut on your Desktop
+4. Double-click the **Resume Builder** shortcut anytime to launch — your browser opens automatically
+
+> **Want a proper `.exe` installer?** Install [Inno Setup](https://jrsoftware.org/isinfo.php), open `ResumeBuilder.iss`, and click Build. This produces a `ResumeBuilder-Setup.exe` you can share with anyone.
 
 ---
 
-## Setup
+### Mac — no coding required
 
-### 1. Clone the repo
+1. Download this repo: **Code → Download ZIP** → extract it anywhere
+2. Open **Terminal** (search "Terminal" in Spotlight with `Cmd + Space`)
+3. Drag the extracted folder into the Terminal window, then type `/install.sh` after it and press Enter
+   ```
+   /path/to/resume-builder/install.sh
+   ```
+   - Installs Node.js automatically via Homebrew if needed (or prompts you to install it)
+   - Installs all dependencies
+   - Adds **Resume Builder** to your Applications folder
+4. Open **Resume Builder** from Launchpad or Spotlight (`Cmd + Space` → "Resume Builder") anytime to launch
+
+> **Already have Node.js?** You can also just run `./start.sh` from the folder to launch directly.
+
+---
+
+### Developer setup (terminal)
 
 ```bash
-gh repo clone aleezah/Resume-Builder
-cd Resume-Builder
-```
+# Clone
+git clone https://github.com/aleezah/Aleeza-s-Resume-Builder.git
+cd Aleeza-s-Resume-Builder
 
-### 2. Install dependencies
-
-```bash
+# Install dependencies
 npm run install:all
+
+# Start
+npm run dev        # Mac / Linux
+start.bat          # Windows
 ```
-
-This installs both the backend (`/`) and frontend (`/client`) dependencies in one command.
-
-### 3. Configure environment (optional)
-
-Copy the example env file and edit it if you want to set defaults via environment variables instead of the in-app Settings page:
-
-```bash
-cp .env.example .env
-```
-
-You can leave this blank — all settings can be configured through the **Settings** page in the UI instead.
-
-### 4. Start the app
-
-**Windows:**
-```bash
-start.bat
-```
-
-**Mac/Linux:**
-```bash
-npm run dev
-```
-
-This starts both the backend (port `3001`) and the frontend dev server (port `5173`).
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## AI provider setup
+
+You'll need at least one AI provider configured in the app's Settings page:
+
+| Provider | Cost | Sign up |
+|---|---|---|
+| Groq | Free tier | [console.groq.com](https://console.groq.com) |
+| Google Gemini | Free tier | [aistudio.google.com](https://aistudio.google.com) |
+| Ollama | Free, runs locally | [ollama.com](https://ollama.com) |
+| Anthropic Claude | Paid | [console.anthropic.com](https://console.anthropic.com) |
+| OpenAI | Paid | [platform.openai.com](https://platform.openai.com) |
 
 ---
 
@@ -93,6 +101,11 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ```
 resume-builder/
+├── install.bat            # One-click Windows setup (run once)
+├── install.sh             # One-click Mac setup (run once)
+├── start.bat              # Launch the app (Windows)
+├── start.sh               # Launch the app (Mac)
+├── ResumeBuilder.iss      # Inno Setup script to build a .exe installer
 ├── server.js              # Express server entry point
 ├── db/                    # SQLite database setup
 ├── routes/                # API routes (generate, documents, jobs, settings…)

@@ -28,7 +28,18 @@ function JobList() {
     <div className="page">
       <div className="flex items-center justify-between mb-1">
         <h1 className="page-title">Jobs</h1>
-        <Link to="/jobs/new" className="btn-primary">+ Add Job</Link>
+        <div className="flex gap-2">
+          {jobs.length > 0 && (
+            <a
+              href={`/api/jobs/export/csv?profile_id=${currentId}`}
+              download="jobs.csv"
+              className="btn-secondary btn-sm"
+            >
+              ↓ Export CSV
+            </a>
+          )}
+          <Link to="/jobs/new" className="btn-primary">+ Add Job</Link>
+        </div>
       </div>
       <p className="page-subtitle">Track job descriptions and generate tailored applications.</p>
 
