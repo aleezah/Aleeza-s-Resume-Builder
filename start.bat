@@ -1,8 +1,8 @@
 @echo off
-title Resume Builder
+title Job Application Tool
 color 0A
 
-echo Starting Resume Builder...
+echo Starting Job Application Tool...
 echo.
 
 :: Start the server in the background

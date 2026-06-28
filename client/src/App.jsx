@@ -132,7 +132,7 @@ export default function App() {
           {/* Sidebar */}
           <nav className="w-52 shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col py-5 gap-1 overflow-y-auto">
             <div className="px-4 mb-4">
-              <h1 className="text-brand-400 font-bold text-sm tracking-widest uppercase">Resume Builder</h1>
+              <h1 className="text-brand-400 font-bold text-sm tracking-widest uppercase">Job Application Tool</h1>
             </div>
 
             <ProfileSwitcher profiles={profiles} currentId={currentId}

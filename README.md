@@ -1,4 +1,4 @@
-# Resume Builder
+# Job Application Tool
 
 A local web app that generates tailored resumes and cover letters using your profile, saved job postings, and an optional LaTeX template. Supports multiple AI providers — pick whichever you have access to.
 
@@ -21,8 +21,8 @@ A local web app that generates tailored resumes and cover letters using your pro
 2. Download this repo: **Code → Download ZIP** → extract it anywhere
 3. Double-click `install.bat`
    - Checks for Node.js and installs all dependencies automatically
-   - Creates a **Resume Builder** shortcut on your Desktop
-4. Double-click the **Resume Builder** shortcut anytime to launch — your browser opens automatically
+   - Creates a **Job Application Tool** shortcut on your Desktop
+4. Double-click the **Job Application Tool** shortcut anytime to launch — your browser opens automatically
 
 > **Want a proper `.exe` installer?** Install [Inno Setup](https://jrsoftware.org/isinfo.php), open `ResumeBuilder.iss`, and click Build. This produces a `ResumeBuilder-Setup.exe` you can share with anyone.
 
@@ -38,8 +38,8 @@ A local web app that generates tailored resumes and cover letters using your pro
    ```
    - Installs Node.js automatically via Homebrew if needed (or prompts you to install it)
    - Installs all dependencies
-   - Adds **Resume Builder** to your Applications folder
-4. Open **Resume Builder** from Launchpad or Spotlight (`Cmd + Space` → "Resume Builder") anytime to launch
+   - Adds **Job Application Tool** to your Applications folder
+4. Open **Job Application Tool** from Launchpad or Spotlight (`Cmd + Space` → "Job Application Tool") anytime to launch
 
 > **Already have Node.js?** You can also just run `./start.sh` from the folder to launch directly.
 

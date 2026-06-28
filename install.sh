@@ -2,7 +2,7 @@
 set -e
 
 echo "================================================"
-echo "  Resume Builder — First-Time Setup"
+echo "  Job Application Tool — First-Time Setup"
 echo "================================================"
 echo ""
 
@@ -34,10 +34,10 @@ echo "[OK] Dependencies installed."
 echo ""
 
 # Create a launcher app using AppleScript so it shows in Dock/Spotlight
-echo "[2/2] Creating Resume Builder app in Applications..."
+echo "[2/2] Creating Job Application Tool app in Applications..."
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-APP_DIR="/Applications/Resume Builder.app"
+APP_DIR="/Applications/Job Application Tool.app"
 CONTENTS="$APP_DIR/Contents"
 MACOS="$CONTENTS/MacOS"
 RESOURCES="$CONTENTS/Resources"
@@ -53,9 +53,9 @@ cat > "$CONTENTS/Info.plist" << PLIST
     <key>CFBundleExecutable</key>
     <string>launch</string>
     <key>CFBundleIdentifier</key>
-    <string>com.aleezah.resumebuilder</string>
+    <string>com.aleezah.jobapplicationtool</string>
     <key>CFBundleName</key>
-    <string>Resume Builder</string>
+    <string>Job Application Tool</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundlePackageType</key>
@@ -80,12 +80,12 @@ LAUNCHER
 
 chmod +x "$MACOS/launch"
 
-echo "[OK] Resume Builder added to /Applications."
+echo "[OK] Job Application Tool added to /Applications."
 echo ""
 echo "================================================"
 echo "  Setup complete!"
 echo ""
-echo "  Open 'Resume Builder' from your Applications"
+echo "  Open 'Job Application Tool' from your Applications"
 echo "  folder or Spotlight (Cmd + Space) anytime."
 echo "================================================"
 echo ""
