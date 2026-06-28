@@ -268,7 +268,7 @@ ${existingResume ? '- Keep the EXACT same structure, section order, and formatti
 - **SKILLS SECTION — strict rule**: only list skills that appear verbatim in the "SKILLS BY CATEGORY" section of Material 2. Do NOT add, rename, or infer any skill from the job posting. Do NOT add skills like "SQL/T-SQL", "XML", "XSLT", "MapForce", or anything else that isn't explicitly listed in the candidate's profile. You may regroup or rename categories to better match the job posting, but every individual skill name must come from the profile's skills list.
 - Keywords from the job posting may be woven naturally into bullet point descriptions only — never into the skills list
 - Write achievement-focused bullet points; quantify where the profile data supports it
-- Do NOT exceed one page — prioritise recency and relevance if cuts are needed
+- Target 1 to 1.5 pages — include all selected roles with enough bullets to fully represent each; do NOT cut bullets just to squeeze into exactly one page
 - Do NOT invent or exaggerate anything — only use what is in the profile above
 
 ===========================

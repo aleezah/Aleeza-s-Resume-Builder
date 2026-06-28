@@ -67,6 +67,7 @@ function GenerateMain() {
   const [includeCerts, setIncludeCerts] = useState(false)
   const [includeProjects, setIncludeProjects] = useState(false)
   const [showCustomise, setShowCustomise] = useState(false)
+  const [resumePages, setResumePages] = useState(1)
 
   const genProgress = useProgressBar([
     [10, 'Sending to AI…'],
@@ -113,6 +114,7 @@ function GenerateMain() {
           selected_exp_ids: [...selectedExpIds],
           include_certs: includeCerts,
           include_projects: includeProjects,
+          resume_pages: resumePages,
         }
       })
       genProgress.finish()
