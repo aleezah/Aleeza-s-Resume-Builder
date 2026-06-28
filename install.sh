@@ -137,6 +137,26 @@ APPLESCRIPT
 # Apply icon if we have one
 if [ -f "$ICNS_PATH" ]; then
     cp "$ICNS_PATH" "$APP_PATH/Contents/Resources/applet.icns"
+
+    # Update Info.plist to explicitly reference the icon
+    /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile applet" "$APP_PATH/Contents/Info.plist" 2>/dev/null || true
+
+    # Use Python (built into macOS) to set the icon via Finder API — most reliable method
+    python3 - << PYEOF 2>/dev/null || true
+import subprocess, sys
+try:
+    import Cocoa
+    image = Cocoa.NSImage.alloc().initWithContentsOfFile_("$ICNS_PATH")
+    if image:
+        ws = Cocoa.NSWorkspace.sharedWorkspace()
+        ws.setIcon_forFile_options_(image, "$APP_PATH", 0)
+except Exception as e:
+    pass
+PYEOF
+
+    # Clear macOS icon cache so the new icon shows immediately
+    touch "$APP_PATH"
+    killall Dock 2>/dev/null || true
 fi
 
 # Remove quarantine flag so macOS doesn't block it
