@@ -348,7 +348,7 @@ RULES:
 - The fourth paragraph should feel the warmest and most genuine — let that energy carry through the whole letter
 
 BANNED WORDS & PHRASES — never use these under any circumstances:
-"I am writing to apply", "I am excited/thrilled/eager", "I am confident", "utilize", "I look forward to discussing my application", "ideal candidate", "make me a great fit", "passionate about", "I believe I can", "my background spans", "maps directly to", "aligns with", "functional requirements", "I am drawn to", "demonstrated experience", "in this role I", "technical profile", "I look forward to hearing from you"
+"I am writing to apply", "I am excited/thrilled/eager", "I am confident", "utilize", "I look forward to discussing my application", "ideal candidate", "make me a great fit", "passionate about", "I believe I can", "my background spans", "maps directly to", "aligns with", "functional requirements", "I am drawn to", "demonstrated experience", "in this role I", "technical profile", "I look forward to hearing from you", "I'm drawn to the opportunity", "directly translates to", "I'd welcome the chance"
 
 ===========================
 GENERAL RULES:
