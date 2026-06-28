@@ -3,6 +3,7 @@ const axios = require('axios')
 const { v4: uuidv4 } = require('uuid')
 const { getDb } = require('../db')
 const { detectDuplicates } = require('../services/merger')
+const { callAI } = require('../services/aiService')
 
 const router = express.Router()
 
@@ -57,12 +58,108 @@ router.post('/github', async (req, res) => {
       try { db.prepare('INSERT INTO skills (id,profile_id,name,category,source) VALUES (?,?,?,?,?)').run(id, profile_id, lang, 'Languages', 'github') } catch {}
     }
 
+    // Save token for future enrichment calls
+    db.prepare(`INSERT INTO settings (key,value) VALUES ('github_token',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`).run(token)
+
     res.json({
       success: true,
       username: user.login,
       repos_imported: imported,
       skills_added: langs.length
     })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Re-sync GitHub repos for a profile
+router.post('/github/sync', async (req, res) => {
+  const { profile_id } = req.body
+  if (!profile_id) return res.status(400).json({ error: 'profile_id required' })
+  const db = getDb()
+  const token = db.prepare("SELECT value FROM settings WHERE key='github_token'").get()?.value
+  if (!token) return res.status(400).json({ error: 'No GitHub token saved. Connect GitHub first.' })
+
+  try {
+    const headers = { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    const { data: repos } = await axios.get('https://api.github.com/user/repos?per_page=100&sort=pushed&type=owner', { headers })
+
+    let imported = 0
+    for (const repo of repos.filter(r => !r.fork)) {
+      const existing = db.prepare('SELECT id FROM projects WHERE profile_id=? AND external_id=? AND source=?').get(profile_id, String(repo.id), 'github')
+      if (!existing) {
+        db.prepare(`INSERT INTO projects (id,profile_id,name,description,url,tech_stack,start_date,source,external_id) VALUES (?,?,?,?,?,?,?,?,?)`)
+          .run(uuidv4(), profile_id, repo.name, repo.description||null, repo.html_url, repo.language||null, repo.created_at?.slice(0,10)||null, 'github', String(repo.id))
+        imported++
+      }
+    }
+    res.json({ success: true, repos_imported: imported })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Generate AI bullet points for a project using GitHub commit + language data
+router.post('/github/enrich/:projectId', async (req, res) => {
+  const db = getDb()
+  const project = db.prepare('SELECT * FROM projects WHERE id=?').get(req.params.projectId)
+  if (!project) return res.status(404).json({ error: 'Project not found' })
+
+  const token = db.prepare("SELECT value FROM settings WHERE key='github_token'").get()?.value
+  if (!token) return res.status(400).json({ error: 'No GitHub token saved. Re-connect GitHub on your Profile page.' })
+
+  try {
+    const headers = { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+
+    // Extract owner/repo from URL
+    const match = (project.url || '').match(/github\.com\/([^/]+)\/([^/]+)/)
+    if (!match) return res.status(400).json({ error: 'Could not parse GitHub repo URL' })
+    const [, owner, repo] = match
+
+    // Fetch in parallel: languages, recent commits, README
+    const [langRes, commitRes, readmeRes] = await Promise.allSettled([
+      axios.get(`https://api.github.com/repos/${owner}/${repo}/languages`, { headers }),
+      axios.get(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=30`, { headers }),
+      axios.get(`https://api.github.com/repos/${owner}/${repo}/readme`, { headers: { ...headers, Accept: 'application/vnd.github.raw' } }),
+    ])
+
+    const languages = langRes.status === 'fulfilled' ? Object.keys(langRes.value.data) : []
+    const commits   = commitRes.status === 'fulfilled'
+      ? commitRes.value.data.map(c => c.commit?.message?.split('\n')[0]).filter(Boolean)
+      : []
+    const readme    = readmeRes.status === 'fulfilled'
+      ? (typeof readmeRes.value.data === 'string' ? readmeRes.value.data : '').slice(0, 1500)
+      : ''
+
+    const prompt = `You are writing resume bullet points for a software project.
+
+Project: ${project.name}
+Description: ${project.description || 'None'}
+Languages used: ${languages.join(', ') || 'Unknown'}
+
+Recent commit messages (these tell you what was actually built and worked on):
+${commits.slice(0, 20).map((c, i) => `${i + 1}. ${c}`).join('\n') || 'None available'}
+
+README excerpt:
+${readme || 'None available'}
+
+Write 3–5 concise resume bullet points that describe:
+- What this project does / what problem it solves
+- The technical work involved (languages, tools, architecture)
+- Any notable features or outcomes you can infer from the commits and README
+
+Rules:
+- Use strong action verbs (Built, Developed, Designed, Implemented, etc.)
+- Each bullet under 25 words
+- Only use facts from the data above — do not invent features or outcomes
+- Do NOT mention the number of commits or that you read commit messages
+- Return ONLY bullet points, one per line, each starting with •
+- No intro, no explanation`
+
+    const raw = await callAI(prompt, { temperature: 0.4, max_tokens: 1024 })
+    const bullets = raw.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean)
+
+    res.json({ bullets, languages, commit_count: commits.length })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

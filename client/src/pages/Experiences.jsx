@@ -484,6 +484,10 @@ function ProjectsSection({ profileId }) {
   const [items, setItems] = useState([])
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({})
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState(null)
+  const [enriching, setEnriching] = useState(null)
+  const [enrichPreview, setEnrichPreview] = useState(null) // { id, bullets, languages }
 
   const load = () => api.listProjects(profileId).then(setItems)
   useEffect(() => { if (profileId) load() }, [profileId])
@@ -495,12 +499,82 @@ function ProjectsSection({ profileId }) {
     setAdding(false); setForm({}); load()
   }
 
+  async function handleSync() {
+    setSyncing(true); setSyncMsg(null)
+    try {
+      const r = await api.syncGitHub(profileId)
+      setSyncMsg(`✓ Synced — ${r.repos_imported} new projects imported`)
+      load()
+    } catch (e) {
+      setSyncMsg(`Error: ${e.response?.data?.error || e.message}`)
+    }
+    setSyncing(false)
+  }
+
+  async function handleEnrich(item) {
+    setEnriching(item.id)
+    try {
+      const r = await api.enrichGitHubProject(item.id)
+      setEnrichPreview({ id: item.id, name: item.name, bullets: r.bullets, languages: r.languages })
+    } catch (e) {
+      alert(e.response?.data?.error || e.message)
+    }
+    setEnriching(null)
+  }
+
+  async function applyEnrich() {
+    if (!enrichPreview) return
+    const item = items.find(i => i.id === enrichPreview.id)
+    await api.updateProject(enrichPreview.id, {
+      ...item,
+      description: enrichPreview.bullets.map(b => `• ${b}`).join('\n'),
+      tech_stack: enrichPreview.languages.join(', ') || item.tech_stack
+    })
+    setEnrichPreview(null)
+    load()
+  }
+
   return (
     <section className="mb-8">
+      {/* Enrich preview modal */}
+      {enrichPreview && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
+          <div className="bg-gray-900 rounded-xl border border-brand-700 w-full max-w-xl max-h-[90vh] flex flex-col">
+            <div className="p-5 border-b border-gray-800">
+              <h2 className="font-bold text-white text-lg">✨ Generated Bullets</h2>
+              <p className="text-xs text-gray-500 mt-0.5">{enrichPreview.name} · based on commits, languages, and README</p>
+              {enrichPreview.languages.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {enrichPreview.languages.map(l => <span key={l} className="tag text-xs">{l}</span>)}
+                </div>
+              )}
+            </div>
+            <div className="overflow-y-auto flex-1 p-5 space-y-2">
+              {enrichPreview.bullets.map((b, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                  <span className="text-brand-400 mt-0.5 shrink-0">•</span>
+                  <span>{b}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between p-5 border-t border-gray-800">
+              <button onClick={() => setEnrichPreview(null)} className="btn-secondary">Discard</button>
+              <button onClick={applyEnrich} className="btn-primary">✓ Apply & Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <p className="section-heading mb-0">Projects</p>
-        <button onClick={() => setAdding(a => !a)} className="btn-sm btn-primary">+ Add</button>
+        <div className="flex gap-2">
+          <button onClick={handleSync} disabled={syncing} className="btn-sm btn-secondary" title="Re-sync repos from GitHub">
+            {syncing ? '…' : '⟳ Sync GitHub'}
+          </button>
+          <button onClick={() => setAdding(a => !a)} className="btn-sm btn-primary">+ Add</button>
+        </div>
       </div>
+      {syncMsg && <p className="text-xs text-green-400 mb-3">{syncMsg}</p>}
 
       {adding && (
         <div className="card mb-4 border-brand-700">
@@ -523,16 +597,24 @@ function ProjectsSection({ profileId }) {
       <div className="space-y-2">
         {items.map(item => (
           <div key={item.id} className="card flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-white">{item.name}</span>
-                {item.url && <a href={item.url} target="_blank" rel="noreferrer" className="text-brand-400 text-xs hover:underline">↗ {item.source}</a>}
+                {item.url && <a href={item.url} target="_blank" rel="noreferrer" className="text-brand-400 text-xs hover:underline">↗ view</a>}
                 <span className="badge bg-gray-800 text-gray-500">{item.source}</span>
               </div>
-              {item.description && <p className="text-sm text-gray-400 mt-1">{item.description}</p>}
               {item.tech_stack && <p className="text-xs text-gray-600 mt-1">{item.tech_stack}</p>}
+              {item.description && <p className="text-sm text-gray-400 mt-1 whitespace-pre-line">{item.description}</p>}
             </div>
-            <button onClick={() => api.deleteProject(item.id).then(load)} className="btn-sm btn-danger shrink-0">✕</button>
+            <div className="flex gap-1 shrink-0">
+              {item.source === 'github' && (
+                <button onClick={() => handleEnrich(item)} disabled={enriching === item.id}
+                  className="btn-sm btn-secondary" title="Generate bullet points from commits, languages, and README">
+                  {enriching === item.id ? '…' : '✨ Generate'}
+                </button>
+              )}
+              <button onClick={() => api.deleteProject(item.id).then(load)} className="btn-sm btn-danger">✕</button>
+            </div>
           </div>
         ))}
       </div>

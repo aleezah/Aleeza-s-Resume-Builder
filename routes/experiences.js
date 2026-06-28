@@ -61,17 +61,18 @@ router.post('/:id/polish', async (req, res) => {
 
 Role: ${exp.title} at ${exp.company}
 
-Here are all the bullet points collected for this role (some may be duplicates or near-duplicates):
+Here are all the bullet points collected for this role:
 ${allBullets.map((b, i) => `${i + 1}. ${b}`).join('\n')}
 
 Your task:
-1. Remove exact duplicates and near-duplicates — keep the best-worded version of each unique point
-2. Merge bullets that describe the same activity into one stronger bullet
-3. Improve wording to be concise, specific, and achievement-focused — strong action verbs, under 25 words each
-4. Do NOT invent new facts, technologies, or outcomes not present in the original bullets
-5. Do NOT add bullets — only consolidate and improve what exists
-6. Return ONLY the final bullet list, one bullet per line, each starting with •
-7. No introduction, no explanation, no extra text`
+1. ONLY remove a bullet if it is essentially identical in meaning to another bullet — if two bullets say almost exactly the same thing in different words, keep the better-worded one
+2. ONLY merge two bullets if they describe the exact same specific activity — do NOT merge bullets just because they share a broad theme (e.g. "SQL for troubleshooting" and "SQL for one-time scripts" are different activities — keep both)
+3. Keep every bullet that describes a distinct activity, skill, or responsibility — when in doubt, keep it
+4. Improve wording on kept bullets to be concise and action-verb-led, under 25 words each
+5. Do NOT drop a bullet just to reduce the count — only drop true duplicates
+6. Do NOT invent new facts, technologies, or outcomes not in the originals
+7. Return ONLY the final bullet list, one per line, each starting with •
+8. No introduction, no explanation, no extra text — bullets only`
 
   try {
     const raw = await callAI(prompt, { temperature: 0.3, max_tokens: 6000 })

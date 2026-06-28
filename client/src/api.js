@@ -65,8 +65,10 @@ export const listGenerations = (profile_id)=> api.get('/generate', { params: { p
 export const deleteGeneration = (id)       => api.delete(`/generate/${id}`)
 
 // ── Integrations ──────────────────────────────────────────────────────────────
-export const connectGitHub  = (data)      => api.post('/integrations/github', data).then(r => r.data)
-export const connectGitLab  = (data)      => api.post('/integrations/gitlab', data).then(r => r.data)
+export const connectGitHub      = (data) => api.post('/integrations/github', data).then(r => r.data)
+export const syncGitHub         = (profile_id) => api.post('/integrations/github/sync', { profile_id }).then(r => r.data)
+export const enrichGitHubProject= (id)   => api.post(`/integrations/github/enrich/${id}`).then(r => r.data)
+export const connectGitLab      = (data) => api.post('/integrations/gitlab', data).then(r => r.data)
 export const importLinkedIn = (formData)  => api.post('/integrations/linkedin', formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data)
 
 // ── Settings ──────────────────────────────────────────────────────────────────
