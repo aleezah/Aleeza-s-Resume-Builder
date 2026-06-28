@@ -27,6 +27,7 @@ export const updateExperience   = (id, data)   => api.put(`/experiences/${id}`, 
 export const deleteExperience   = (id)         => api.delete(`/experiences/${id}`)
 export const confirmMerge       = (data)       => api.post('/experiences/merge', data)
 export const findDuplicates     = (profile_id) => api.get('/experiences/find-duplicates', { params: { profile_id } }).then(r => r.data)
+export const polishExperience   = (id)         => api.post(`/experiences/${id}/polish`).then(r => r.data)
 export const importExtracted    = (data)       => api.post('/experiences/import', data).then(r => r.data)
 
 export const listEducation      = (profile_id) => api.get('/experiences/education', { params: { profile_id } }).then(r => r.data)

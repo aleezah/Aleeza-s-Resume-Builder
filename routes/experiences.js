@@ -2,6 +2,7 @@ const express = require('express')
 const { v4: uuidv4 } = require('uuid')
 const { getDb } = require('../db')
 const { confirmMerge, detectDuplicates, experienceSimilarity } = require('../services/merger')
+const { callAI } = require('../services/aiService')
 
 const router = express.Router()
 
@@ -42,6 +43,45 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   getDb().prepare('DELETE FROM experiences WHERE id = ?').run(req.params.id)
   res.json({ success: true })
+})
+
+// Polish bullets: deduplicate and improve wording without adding new facts
+router.post('/:id/polish', async (req, res) => {
+  const exp = getDb().prepare('SELECT * FROM experiences WHERE id = ?').get(req.params.id)
+  if (!exp) return res.status(404).json({ error: 'Not found' })
+
+  const allBullets = [
+    ...(exp.description || '').split('\n'),
+    ...(exp.achievements || '').split('\n'),
+  ].map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean)
+
+  if (allBullets.length === 0) return res.json({ bullets: [] })
+
+  const prompt = `You are editing resume bullet points for a single job role.
+
+Role: ${exp.title} at ${exp.company}
+
+Here are all the bullet points collected for this role (some may be duplicates or near-duplicates):
+${allBullets.map((b, i) => `${i + 1}. ${b}`).join('\n')}
+
+Your task:
+1. Remove exact duplicates and near-duplicates — keep the best-worded version of each unique point
+2. Merge bullets that describe the same activity into one stronger bullet
+3. Improve wording to be concise, specific, and achievement-focused — strong action verbs, under 25 words each
+4. Do NOT invent new facts, technologies, or outcomes not present in the original bullets
+5. Do NOT add bullets — only consolidate and improve what exists
+6. Return ONLY the final bullet list, one bullet per line, each starting with •
+7. No introduction, no explanation, no extra text`
+
+  try {
+    const raw = await callAI(prompt, { temperature: 0.3, max_tokens: 1024 })
+    const bullets = raw.split('\n')
+      .map(l => l.replace(/^[-•*]\s*/, '').trim())
+      .filter(Boolean)
+    res.json({ bullets })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
 })
 
 // Confirm a merge: keep chosen bullets, delete the duplicate

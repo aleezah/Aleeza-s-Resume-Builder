@@ -155,6 +155,8 @@ function ExperienceSection({ profileId }) {
   const [scanPairs, setScanPairs]   = useState(null)
   const [scanning, setScanning]     = useState(false)
   const [scanMsg, setScanMsg]       = useState(null)
+  const [polishing, setPolishing]   = useState(null) // id being polished
+  const [polishPreview, setPolishPreview] = useState(null) // { id, bullets }
 
   const load = () => api.listExperiences(profileId).then(items => setItems(sortExperiences(items)))
   useEffect(() => { if (profileId) load() }, [profileId])
@@ -191,12 +193,58 @@ function ExperienceSection({ profileId }) {
     load()
   }
 
+  async function handlePolish(item) {
+    setPolishing(item.id)
+    try {
+      const { bullets } = await api.polishExperience(item.id)
+      setPolishPreview({ id: item.id, bullets })
+    } catch (e) {
+      alert(e.response?.data?.error || e.message)
+    }
+    setPolishing(null)
+  }
+
+  async function applyPolish() {
+    if (!polishPreview) return
+    const item = items.find(i => i.id === polishPreview.id)
+    const cleaned = polishPreview.bullets.map(b => `• ${b}`).join('\n')
+    await api.updateExperience(polishPreview.id, { ...item, achievements: cleaned, description: '' })
+    setPolishPreview(null)
+    load()
+  }
+
   const isFormOpen = adding || editing !== null
 
   return (
     <section className="mb-8">
       {scanPairs && (
         <DuplicateScanModal pairs={scanPairs} onDone={() => { setScanPairs(null); load() }} />
+      )}
+
+      {/* Polish preview modal */}
+      {polishPreview && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
+          <div className="bg-gray-900 rounded-xl border border-brand-700 w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-800">
+              <div>
+                <h2 className="font-bold text-white text-lg">Cleaned Bullets</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Duplicates removed, wording improved — no new facts added</p>
+              </div>
+            </div>
+            <div className="overflow-y-auto flex-1 p-5 space-y-2">
+              {polishPreview.bullets.map((b, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                  <span className="text-brand-400 mt-0.5 shrink-0">•</span>
+                  <span>{b}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between p-5 border-t border-gray-800">
+              <button onClick={() => setPolishPreview(null)} className="btn-secondary">Discard</button>
+              <button onClick={applyPolish} className="btn-primary">✓ Apply & Save</button>
+            </div>
+          </div>
+        </div>
       )}
       <div className="flex items-center justify-between mb-3">
         <p className="section-heading mb-0">Work Experience</p>
@@ -267,6 +315,10 @@ function ExperienceSection({ profileId }) {
                 )}
               </div>
               <div className="flex gap-1 shrink-0">
+                <button onClick={() => handlePolish(item)} disabled={polishing === item.id}
+                  className="btn-sm btn-secondary" title="Remove duplicates and improve wording with AI">
+                  {polishing === item.id ? '…' : '✨ Clean up'}
+                </button>
                 <button onClick={() => startEdit(item)} className="btn-sm btn-secondary">Edit</button>
                 <button onClick={() => handleDelete(item.id)} className="btn-sm btn-danger">✕</button>
               </div>
