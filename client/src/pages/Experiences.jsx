@@ -488,9 +488,13 @@ function ProjectsSection({ profileId }) {
   const [syncMsg, setSyncMsg] = useState(null)
   const [enriching, setEnriching] = useState(null)
   const [enrichPreview, setEnrichPreview] = useState(null) // { id, bullets, languages }
+  const [ghConnected, setGhConnected] = useState(null) // null=unknown, true/false
 
   const load = () => api.listProjects(profileId).then(setItems)
   useEffect(() => { if (profileId) load() }, [profileId])
+  useEffect(() => {
+    api.getGitHubStatus().then(r => setGhConnected(r.connected)).catch(() => setGhConnected(false))
+  }, [])
 
   function handleChange(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })) }
 
@@ -567,14 +571,16 @@ function ProjectsSection({ profileId }) {
 
       <div className="flex items-center justify-between mb-3">
         <p className="section-heading mb-0">Projects</p>
-        <div className="flex gap-2">
-          <button onClick={handleSync} disabled={syncing} className="btn-sm btn-secondary" title="Re-sync repos from GitHub">
+        <div className="flex items-center gap-2">
+          {ghConnected === true && <span className="text-xs text-green-400">● GitHub connected</span>}
+          {ghConnected === false && <Link to="/profile" className="text-xs text-yellow-400 hover:underline">⚠ Connect GitHub →</Link>}
+          <button onClick={handleSync} disabled={syncing || !ghConnected} className="btn-sm btn-secondary" title="Re-sync repos from GitHub">
             {syncing ? '…' : '⟳ Sync GitHub'}
           </button>
           <button onClick={() => setAdding(a => !a)} className="btn-sm btn-primary">+ Add</button>
         </div>
       </div>
-      {syncMsg && <p className="text-xs text-green-400 mb-3">{syncMsg}</p>}
+      {syncMsg && <p className={`text-xs mb-3 ${syncMsg.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{syncMsg}</p>}
 
       {adding && (
         <div className="card mb-4 border-brand-700">

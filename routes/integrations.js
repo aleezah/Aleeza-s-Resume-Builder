@@ -72,6 +72,12 @@ router.post('/github', async (req, res) => {
   }
 })
 
+// Check if GitHub token is saved
+router.get('/github/status', (req, res) => {
+  const token = getDb().prepare("SELECT value FROM settings WHERE key='github_token'").get()?.value
+  res.json({ connected: !!token })
+})
+
 // Re-sync GitHub repos for a profile
 router.post('/github/sync', async (req, res) => {
   const { profile_id } = req.body
