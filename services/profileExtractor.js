@@ -56,7 +56,7 @@ async function extractProfileFromText(rawText, _profileId) {
   const response = await callAI(EXTRACTION_PROMPT(rawText))
 
   // Strip markdown fences and leading/trailing prose
-  let cleaned = response
+  let cleaned = response.text
     .replace(/```json\s*/gi, '')
     .replace(/```\s*/g, '')
     .trim()

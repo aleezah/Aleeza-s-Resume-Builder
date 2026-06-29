@@ -50,6 +50,8 @@ A local web app that generates tailored resumes and cover letters using your pro
 
 > If Mac says *"install.sh cannot be opened because it is from an unidentified developer"*, right-click the file → **Open** → **Open** to bypass this.
 
+> **Custom icon (optional, one-time):** macOS requires this to be set manually. Open `Job Application Tool.icns` in Preview → `Cmd+A` → `Cmd+C`. Then right-click the app in Applications → **Get Info** → click the small icon in the top-left → `Cmd+V`.
+
 ---
 
 ### Developer setup (terminal)

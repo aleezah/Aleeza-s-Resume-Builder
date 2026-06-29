@@ -55,6 +55,16 @@ const INSTRUCTIONS = {
   }
 }
 
+const CONSOLE_LINKS = {
+  anthropic: { label: 'Anthropic Console', href: 'https://console.anthropic.com/settings/billing' },
+  openai:    { label: 'OpenAI Platform',   href: 'https://platform.openai.com/account/billing/overview' },
+  gemini:    { label: 'Google AI Studio',  href: 'https://aistudio.google.com' },
+  groq:      { label: 'Groq Console',      href: 'https://console.groq.com' },
+  ollama:    null,
+}
+
+function fmt(n) { return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n) }
+
 export default function SettingsPage() {
   const [form, setForm]           = useState({})
   const [saving, setSaving]       = useState(false)
@@ -67,9 +77,11 @@ export default function SettingsPage() {
   const [detectingGemini, setDetectingGemini] = useState(false)
   const [groqModels, setGroqModels] = useState(null)
   const [detectingGroq, setDetectingGroq] = useState(false)
+  const [usage, setUsage]         = useState(null)
 
   useEffect(() => {
     api.getSettings().then(s => setForm(s))
+    api.getUsage().then(setUsage).catch(() => {})
   }, [])
 
   function handleChange(e) {
@@ -354,6 +366,56 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+      {/* Usage summary */}
+      {usage && (
+        <div className="card mb-5">
+          <p className="section-heading">Your Usage</p>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-gray-800 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-white">{usage.totalGenerations}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Generations</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-white">{fmt(usage.totalPrompt + usage.totalCompletion)}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Total Tokens</div>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-white">
+                {usage.totalCost < 0.01 && usage.totalCost > 0 ? '<$0.01' : usage.totalCost === 0 ? '$0' : `$${usage.totalCost.toFixed(2)}`}
+              </div>
+              <div className="text-xs text-gray-500 mt-0.5">Est. Cost</div>
+            </div>
+          </div>
+
+          {usage.byProvider.length > 0 && (
+            <div className="space-y-2 mb-4">
+              {usage.byProvider.map(p => {
+                const link = CONSOLE_LINKS[p.provider]
+                return (
+                  <div key={p.provider} className="flex items-center justify-between text-sm bg-gray-800 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-300 capitalize">{p.provider}</span>
+                      <span className="text-xs text-gray-600">{p.generations} gen · {fmt(p.prompt_tokens + p.completion_tokens)} tokens</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {p.cost > 0 && <span className="text-brand-400 text-xs font-medium">${p.cost.toFixed(3)}</span>}
+                      {p.cost === 0 && <span className="text-green-500 text-xs">free</span>}
+                      {link && (
+                        <a href={link.href} target="_blank" rel="noreferrer" className="text-xs text-gray-500 hover:text-brand-400">
+                          Check balance ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <p className="text-xs text-gray-600">Cost estimates are approximate based on standard API pricing. Actual charges may differ — check your provider's billing console for the real balance.</p>
+        </div>
+      )}
 
       {/* Cost reference */}
       <div className="card">

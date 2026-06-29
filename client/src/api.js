@@ -63,6 +63,7 @@ export const scrapeUrl = (url) => api.post('/scrape', { url }).then(r => r.data)
 export const generate        = (data)      => api.post('/generate', data).then(r => r.data)
 export const listGenerations = (profile_id)=> api.get('/generate', { params: { profile_id } }).then(r => r.data)
 export const deleteGeneration = (id)       => api.delete(`/generate/${id}`)
+export const getUsage        = ()          => api.get('/generate/usage').then(r => r.data)
 
 // ── Integrations ──────────────────────────────────────────────────────────────
 export const connectGitHub      = (data) => api.post('/integrations/github', data).then(r => r.data)
