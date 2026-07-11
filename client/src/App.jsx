@@ -9,6 +9,7 @@ import DocumentsPage   from './pages/Documents'
 import ExperiencesPage from './pages/Experiences'
 import JobsPage        from './pages/Jobs'
 import GeneratePage    from './pages/Generate'
+import InterviewPrepPage from './pages/InterviewPrep'
 import SettingsPage    from './pages/Settings'
 
 // ── Profile context ───────────────────────────────────────────────────────────
@@ -25,6 +26,7 @@ const NAV = [
   { to: '/experiences',label: 'My Profile',  icon: '◈' },
   { to: '/jobs',       label: 'Jobs',        icon: '◆' },
   { to: '/generate',   label: 'Generate',    icon: '⚡' },
+  { to: '/interview',  label: 'Interview',   icon: '◈' },
   { to: '/settings',   label: 'Settings',    icon: '⚙' },
 ]
 
@@ -163,6 +165,7 @@ export default function App() {
                 <Route path="/experiences" element={<ExperiencesPage />} />
                 <Route path="/jobs/*"      element={<JobsPage />} />
                 <Route path="/generate/*"  element={<GeneratePage />} />
+                <Route path="/interview"   element={<InterviewPrepPage />} />
                 <Route path="/settings"    element={<SettingsPage />} />
               </Routes>
             ) : (

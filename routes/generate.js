@@ -94,6 +94,58 @@ router.post('/', async (req, res) => {
   }
 })
 
+// ── Interview question generation ─────────────────────────────────────────────
+
+router.post('/interview', async (req, res) => {
+  const { profile_id, job_id, job_only = false } = req.body
+  if (!profile_id || !job_id) return res.status(400).json({ error: 'profile_id and job_id required' })
+
+  const db = getDb()
+  const job = db.prepare('SELECT * FROM job_descriptions WHERE id = ?').get(job_id)
+  if (!job) return res.status(404).json({ error: 'Job not found' })
+
+  try {
+    const context = buildContext(profile_id)
+    const prompt = buildInterviewPrompt(context, job, job_only)
+    const aiResult = await callAI(prompt, { max_tokens: 4000 })
+    const questions = parseInterviewResponse(aiResult.text)
+
+    const id = uuidv4()
+    db.prepare(`
+      INSERT INTO interview_preps (id, profile_id, job_id, job_title, job_company, questions, job_only)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, profile_id, job_id, job.title || '', job.company || '', JSON.stringify(questions), job_only ? 1 : 0)
+
+    res.json({ id, questions, job: { company: job.company, title: job.title }, job_only })
+  } catch (err) {
+    console.error('Interview generation error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.get('/interview', (req, res) => {
+  const { profile_id } = req.query
+  if (!profile_id) return res.status(400).json({ error: 'profile_id required' })
+  const rows = getDb().prepare(`
+    SELECT id, job_id, job_title, job_company, job_only, created_at,
+           length(questions) as q_size
+    FROM interview_preps WHERE profile_id = ?
+    ORDER BY created_at DESC
+  `).all(profile_id)
+  res.json(rows)
+})
+
+router.get('/interview/:id', (req, res) => {
+  const row = getDb().prepare('SELECT * FROM interview_preps WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Not found' })
+  res.json({ ...row, questions: JSON.parse(row.questions) })
+})
+
+router.delete('/interview/:id', (req, res) => {
+  getDb().prepare('DELETE FROM interview_preps WHERE id = ?').run(req.params.id)
+  res.json({ success: true })
+})
+
 // Download endpoints
 router.get('/:id/download/docx', (req, res) => {
   const f = path.join(OUTPUT_DIR, `${req.params.id}_resume.docx`)
@@ -363,7 +415,8 @@ Respond with EXACTLY this structure — no extra text before or after:
 ${outputFormat}`
 }
 
-function parseAIResponse(text) {
+function parseAIResponse(rawText) {
+  const text = typeof rawText === 'string' ? rawText : String(rawText ?? '')
   // Flexible delimiters: case-insensitive, optional spaces around dashes
   const D = (name) => new RegExp(`-{2,}\\s*${name}\\s*-{2,}`, 'i')
 
@@ -409,6 +462,202 @@ function parseAIResponse(text) {
   }
 
   return { resumeMd, coverLetterMd, latexFromAI }
+}
+
+function buildInterviewPrompt(context, job, jobOnly = false) {
+  const { basics, experiences, education, skills } = context
+
+  const targetCompany = (job.company || '').trim().toLowerCase()
+  const filteredExp = experiences.filter(e =>
+    !targetCompany || (e.company || '').trim().toLowerCase() !== targetCompany
+  )
+
+  const expText = filteredExp.map(e => {
+    const bullets = [
+      ...(e.description  || '').split('\n').filter(Boolean),
+      ...(e.achievements || '').split('\n').filter(Boolean),
+    ].map(b => `  • ${b.replace(/^[-•*]\s*/, '')}`).join('\n')
+    return `${e.title} @ ${e.company} (${e.start_date || '?'} – ${e.is_current ? 'Present' : e.end_date || '?'})\n${bullets}`
+  }).join('\n\n')
+
+  const skillsText = skills.map(s => s.name).join(', ') || 'None listed.'
+  const eduText = education.map(e => `${e.degree || ''} ${e.field || ''} — ${e.institution}`).join('; ') || ''
+
+  // Detect software/coding roles to add the extra coding category
+  const jobText = `${job.title || ''} ${job.raw_text || ''}`.toLowerCase()
+  const isCodingRole = /\b(software|developer|engineer|coding|programmer|frontend|backend|fullstack|full.?stack|devops|swe|sde|data\s+engineer|ml\s+engineer|machine\s+learning|cloud\s+engineer|platform\s+engineer|site\s+reliability|firmware|embedded|mobile\s+dev|ios\s+dev|android\s+dev)\b/.test(jobText)
+
+  const codingSection = isCodingRole ? `
+---CODING & PROBLEM SOLVING---
+Q: [question]
+Hint: [talking point]
+
+` : ''
+
+  const codingInstruction = isCodingRole ? `
+- CODING & PROBLEM SOLVING: 6-8 questions covering:
+  * Algorithm & data structure challenges relevant to the role (e.g. "How would you find duplicates in a large dataset efficiently?")
+  * System design questions at the appropriate seniority level (e.g. "Design a data pipeline that processes X")
+  * Code quality / debugging scenarios (e.g. "You find a race condition in a production ETL job — walk me through your debugging process")
+  * Complexity and trade-off questions (e.g. "When would you choose X over Y?")
+  * Language/framework deep-dives based on the job's tech stack
+  For each coding question, the Hint should suggest a concrete approach or framework the candidate can anchor to from their real experience.
+` : ''
+
+  const candidateSection = jobOnly ? '' : `
+## Candidate Profile
+Name: ${basics?.full_name || 'Candidate'}
+Education: ${eduText}
+Skills: ${skillsText}
+
+## Work Experience
+${expText || 'None on file.'}
+`
+
+  const hintInstruction = jobOnly
+    ? 'For each question write a "Hint" — a 1-2 sentence best-practice answer framework or key points a strong candidate should cover. Keep hints general and actionable.'
+    : 'For each question write a "Hint" — a 1-2 sentence talking point grounded in the candidate\'s ACTUAL experience. Only reference real facts from the profile above. Do not invent skills or experience.'
+
+  return `You are an expert interview coach. Generate a comprehensive set of tailored interview questions for the job below.
+${candidateSection}
+## Target Job
+Company: ${job.company || 'Unknown'}
+Role: ${job.title || 'Unknown'}
+${job.raw_text ? `\nJob Posting:\n${job.raw_text.slice(0, 3000)}` : ''}
+
+## Instructions
+Generate a large set of interview questions across ${isCodingRole ? '5' : '4'} categories. ${hintInstruction} More questions = more useful, so lean toward the higher end of each range.
+
+- BEHAVIORAL: 7-8 STAR-method questions (Tell me about a time…, Describe a situation…, Give me an example of…). Cover: conflict resolution, deadline pressure, ambiguity, failure/learning, cross-team collaboration, going above and beyond, prioritisation under pressure.
+- TECHNICAL: 8-10 questions drilling into the specific tools, systems, and domain knowledge in the job posting. Reference the actual stack, integrations, and processes mentioned.
+- SITUATIONAL: 5-6 hypothetical scenario questions (What would you do if…, How would you handle…, Walk me through how you'd approach…). Make scenarios realistic for this specific role.
+- ABOUT YOU: 4-5 questions covering motivation, strengths/weaknesses, career trajectory, working style, and culture fit.${codingInstruction}
+
+Respond with EXACTLY this structure — no extra text before or after:
+
+---BEHAVIORAL---
+Q: [question]
+Hint: [talking point]
+
+Q: [question]
+Hint: [talking point]
+
+---TECHNICAL---
+Q: [question]
+Hint: [talking point]
+
+---SITUATIONAL---
+Q: [question]
+Hint: [talking point]
+
+---ABOUT YOU---
+Q: [question]
+Hint: [talking point]
+${codingSection}---END---`
+}
+
+function parseInterviewResponse(rawText) {
+  const text = typeof rawText === 'string' ? rawText : String(rawText ?? '')
+
+  console.log('[Interview] Raw AI response (first 800 chars):\n', text.slice(0, 800))
+
+  const result = { behavioral: [], technical: [], situational: [], about_you: [], coding: [] }
+
+  const SECTION_KEYWORDS = [
+    { key: 'behavioral',  re: /behavioral/i },
+    { key: 'technical',   re: /technical/i  },
+    { key: 'situational', re: /situational/i },
+    { key: 'about_you',   re: /about.{0,4}you/i },
+    { key: 'coding',      re: /coding|problem.{0,8}solv/i },
+  ]
+
+  // Strip markdown bold/italic wrappers from a string
+  const stripMd = s => s.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1').replace(/_{1,2}([^_]+)_{1,2}/g, '$1').trim()
+
+  const lines = text.split(/\r?\n/)
+  let currentKey = null
+  let qText = null
+  let hLines = []
+
+  function commitQuestion() {
+    if (currentKey && qText) {
+      result[currentKey].push({ question: qText, hint: hLines.join(' ').trim() })
+    }
+    qText = null
+    hLines = []
+  }
+
+  for (const raw of lines) {
+    const line = raw.trim()
+    if (!line) continue
+
+    const plain = stripMd(line)  // version with bold/italic removed
+
+    // ── Section header detection ─────────────────────────────────────────────
+    // A line is a section header if it contains a keyword AND is "header-like"
+    // (short, contains ---, starts with #, or is all-caps / title-case label)
+    const looksLikeHeader =
+      line.includes('---') ||
+      /^#{1,4}\s/.test(line) ||
+      /^\*{1,2}[A-Z]/.test(line) ||           // **BEHAVIORAL**
+      (/^[A-Z][A-Z\s]+[:\s]*$/.test(plain) && plain.length < 60) // ABOUT YOU:
+
+    if (looksLikeHeader) {
+      for (const { key, re } of SECTION_KEYWORDS) {
+        if (re.test(plain)) {
+          commitQuestion()
+          currentKey = key
+          break
+        }
+      }
+      continue
+    }
+
+    // Also catch short title-case lines like "Behavioral Questions" or "About You"
+    if (plain.length < 60 && /^[A-Z]/.test(plain)) {
+      for (const { key, re } of SECTION_KEYWORDS) {
+        if (re.test(plain)) {
+          commitQuestion()
+          currentKey = key
+          continue
+        }
+      }
+    }
+
+    if (!currentKey) continue
+
+    // ── Question line ────────────────────────────────────────────────────────
+    // Matches: "Q:", "**Q:**", "Q1:", "Question 1:", "1.", "1)"
+    if (/^(\*{1,2})?Q(?:uestion\s*\d*)?\*{0,2}\s*[:.]/i.test(line) || /^\d+[.)]\s/.test(line)) {
+      commitQuestion()
+      qText = plain
+        .replace(/^Q(?:uestion\s*\d*)?\s*[:.]\s*/i, '')
+        .replace(/^\d+[.)]\s*/, '')
+        .trim()
+      hLines = []
+      continue
+    }
+
+    // ── Hint line ────────────────────────────────────────────────────────────
+    // Matches: "Hint:", "**Hint:**", "H:", "Talking Point:", "Answer Hint:"
+    if (/^(\*{1,2})?(hint|talking\s*point|answer\s*hint|tip)\*{0,2}\s*[:.]/i.test(line) ||
+        /^(\*{1,2})?H\*{0,2}\s*[:.]\s/i.test(line)) {
+      hLines.push(plain.replace(/^(hint|talking\s*point|answer\s*hint|tip|H)\s*[:.]\s*/i, '').trim())
+      continue
+    }
+
+    // ── Continuation of hint or question (indented / plain text after Q) ────
+    if (qText && !line.startsWith('---')) {
+      hLines.push(plain)
+    }
+  }
+  commitQuestion()
+
+  const total = Object.values(result).reduce((n, arr) => n + arr.length, 0)
+  if (total === 0) {
+    throw new Error(`Could not parse interview questions. Check server console for the raw AI response.`)
+  }
+  return result
 }
 
 module.exports = router

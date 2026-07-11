@@ -60,10 +60,14 @@ export const deleteJob   = (id)         => api.delete(`/jobs/${id}`)
 export const scrapeUrl = (url) => api.post('/scrape', { url }).then(r => r.data)
 
 // ── Generate ──────────────────────────────────────────────────────────────────
-export const generate        = (data)      => api.post('/generate', data).then(r => r.data)
-export const listGenerations = (profile_id)=> api.get('/generate', { params: { profile_id } }).then(r => r.data)
-export const deleteGeneration = (id)       => api.delete(`/generate/${id}`)
-export const getUsage        = ()          => api.get('/generate/usage').then(r => r.data)
+export const generate           = (data)       => api.post('/generate', data).then(r => r.data)
+export const listGenerations    = (profile_id) => api.get('/generate', { params: { profile_id } }).then(r => r.data)
+export const deleteGeneration   = (id)         => api.delete(`/generate/${id}`)
+export const getUsage           = ()           => api.get('/generate/usage').then(r => r.data)
+export const generateInterview     = (data) => api.post('/generate/interview', data).then(r => r.data)
+export const listInterviewPreps    = (profile_id) => api.get('/generate/interview', { params: { profile_id } }).then(r => r.data)
+export const getInterviewPrep      = (id) => api.get(`/generate/interview/${id}`).then(r => r.data)
+export const deleteInterviewPrep   = (id) => api.delete(`/generate/interview/${id}`)
 
 // ── Integrations ──────────────────────────────────────────────────────────────
 export const connectGitHub      = (data) => api.post('/integrations/github', data).then(r => r.data)

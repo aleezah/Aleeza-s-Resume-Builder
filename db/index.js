@@ -142,6 +142,17 @@ function initDb() {
       completion_tokens INTEGER,
       created_at       INTEGER NOT NULL DEFAULT (unixepoch())
     );
+
+    CREATE TABLE IF NOT EXISTS interview_preps (
+      id          TEXT PRIMARY KEY,
+      profile_id  TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+      job_id      TEXT REFERENCES job_descriptions(id) ON DELETE SET NULL,
+      job_title   TEXT,
+      job_company TEXT,
+      questions   TEXT NOT NULL,
+      job_only    INTEGER NOT NULL DEFAULT 0,
+      created_at  INTEGER NOT NULL DEFAULT (unixepoch())
+    );
   `)
 
   // Seed a default profile if none exist
